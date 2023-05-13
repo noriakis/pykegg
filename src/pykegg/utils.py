@@ -36,17 +36,31 @@ def overlay_opencv_image(nds,
         mask = np.all(im[:,:,:] == list(cand_color), axis=-1)
         dst[mask,3] = 0
         
-    tups = list()
-
     for i in nds.index:
         tmp = nds.iloc[i,:]
         pos = (int(tmp["x0"]),
                int(-1*tmp["y0"]),
                int(tmp["width"]),
                int(tmp["height"]))
-        tups.append(pos)
-        canvas = cv2.rectangle(img=canvas,
-                               rec=pos, color=hex2rgb(tmp["color"]), thickness=-1)
+
+        tmp_col = tmp["color"]
+        if isinstance(tmp_col, list):
+            num_col = len(tmp_col)
+            nudge = tmp["width"] / num_col
+            for e, one_tmp_col in enumerate(tmp_col):
+                new_width = tmp["width"] - (nudge*e)
+                canvas = cv2.rectangle(img=canvas,
+                           rec=(int(tmp["x0"]),
+                            int(-1*tmp["y0"]),
+                            int(new_width),int(tmp["height"])),
+                           color=hex2rgb(one_tmp_col),
+                           thickness=-1)          
+
+        else:
+            canvas = cv2.rectangle(img=canvas,
+                       rec=pos, color=hex2rgb(tmp_col),
+                       thickness=-1)
+
     image = overlay(canvas, dst)
     return(image)
 
