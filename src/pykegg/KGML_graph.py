@@ -70,7 +70,7 @@ class KGML_graph:
     def get_nodes(self, node_x_nudge=5, node_y_nudge=5):
 
         
-        compounds = pd.DataFrame([c[0] for c in [[[j.id, element.x, element.y, j.name, element.coords, element.type,
+        compounds = pd.DataFrame([c[0] for c in [[[j.id, j.name, element.x, element.y, j.name, element.coords, element.type,
                         element.width, element.height, element.fgcolor, element.bgcolor,
             [k.id for k in j.components]] for element in j.graphics] 
            for j in [self.pathway.entries[i] for i in self.pathway.entries
@@ -78,7 +78,7 @@ class KGML_graph:
         compounds["original_type"] = "compound"
 
         if len(self.pathway.genes)!=0:
-            genes = [[[gene.id, element.x, element.y, element.name, element.coords, element.type,
+            genes = [[[gene.id, gene.name, element.x, element.y, element.name, element.coords, element.type,
                 element.width, element.height, element.fgcolor, element.bgcolor, None] for element in gene.graphics] 
                      for gene in self.pathway.genes]
             genes = pd.DataFrame([g[0] for g in genes])
@@ -87,7 +87,7 @@ class KGML_graph:
             genes = None
 
         if len(self.pathway.orthologs)!=0:
-            orthos = [[[ortho.id, element.x, element.y, element.name, element.coords, element.type,
+            orthos = [[[ortho.id, ortho.name, element.x, element.y, element.name, element.coords, element.type,
                 element.width, element.height, element.fgcolor, element.bgcolor, None] for element in ortho.graphics] 
                      for ortho in self.pathway.orthologs]
             orthos = pd.DataFrame([g[0] for g in orthos])
@@ -95,13 +95,13 @@ class KGML_graph:
         else:
             orthos = None
             
-        maps = [[[m.id, element.x, element.y, element.name, element.coords, element.type,
+        maps = [[[m.id, m.name, element.x, element.y, element.name, element.coords, element.type,
             element.width, element.height, element.fgcolor, element.bgcolor, None] for element in m.graphics] 
                  for m in self.pathway.maps]
         maps = pd.DataFrame([m[0] for m in maps])
         maps["original_type"] = "map"
         
-        groups = [[[j.id, element.x, element.y, j.name, element.coords, element.type,
+        groups = [[[j.id, j.name, element.x, element.y, j.name, element.coords, element.type,
                                 element.width, element.height, element.fgcolor, element.bgcolor,
                     [k.id for k in j.components]] for element in j.graphics] 
                    for j in [self.pathway.entries[i] for i in self.pathway.entries
@@ -111,7 +111,7 @@ class KGML_graph:
         
         nodes = pd.concat([genes, maps, groups, compounds, orthos])
         
-        nodes.columns = ["id","x","y","name","coords","type",
+        nodes.columns = ["id","name","x","y","graphics_name","coords","type",
                         "width","height","fgcolor","bgcolor","group","original_type"]
         
         nodes["xmin"] = nodes["x"] - nodes["width"] + node_x_nudge

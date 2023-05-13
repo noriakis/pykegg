@@ -75,11 +75,11 @@ def overlay(rects, kegg_map):
 def plot_kegg_pathway_plotnine(g, node_x_nudge=20, node_y_nudge=10,
                               split_graphics_name=True, subtype_num=0,
                                label_size=2, show_label="gene",
-                              edge_color="subtype",):
+                              edge_color="subtype", text_label="graphics_name"):
     nddf = g.get_nodes(node_x_nudge=node_x_nudge, node_y_nudge=node_y_nudge)
     eddf = g.get_edges()
     if split_graphics_name:
-        nddf["name"] = nddf.name.apply(lambda x: x.split(",")[0])
+        nddf["graphics_name"] = nddf.graphics_name.apply(lambda x: x.split(",")[0])
 
     seg_df = pd.concat([
         nddf.reset_index().set_index("id").loc[eddf.entry1].reset_index().loc[:,["x","y"]],
@@ -96,7 +96,7 @@ def plot_kegg_pathway_plotnine(g, node_x_nudge=20, node_y_nudge=10,
                data=nddf[nddf.original_type=="gene"], fill="white", color="grey") +
      geom_rect(aes(xmin="xmin", ymin="ymin", xmax="xmax", ymax="ymax"),
                data=nddf[nddf.original_type=="compound"], fill="white", color="grey") +
-     geom_text(aes(x="x", y="y", label="name", filter="original_type!='group'"),
+     geom_text(aes(x="x", y="y", label=text_label, filter="original_type!='group'"),
                data=nddf[nddf.original_type==show_label], size=label_size)+theme_void())
     return(plot)
 
