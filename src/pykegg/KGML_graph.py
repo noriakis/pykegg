@@ -1,13 +1,13 @@
+import re
 from Bio.KEGG.KGML.KGML_parser import read
-from plotnine import ggplot, geom_point, aes, geom_segment, theme_void, options, geom_rect, geom_text, geom_raster, geom_path
 import pandas as pd
 import numpy as np
 import igraph
 from PIL import Image
 import cv2
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
+import requests
 
 class KGML_graph:
     def __init__(self, path=None, pid=None):

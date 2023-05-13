@@ -16,3 +16,7 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/noriakis/pykegg"
 "Bug Tracker" = "https://github.com/noriakis/pykegg/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
