@@ -15,16 +15,16 @@ from plotnine import (
     geom_segment,
     theme_void,
     geom_rect,
-    geom_text
+    geom_text,
 )
 
 
 def overlay_opencv_image(
-    node_df,
-    path=None,
-    pid=None,
-    fill_color="color",
-    transparent_colors=None,
+        node_df,
+        path=None,
+        pid=None,
+        fill_color="color",
+        transparent_colors=None,
 ):
     """Obtain the raw image of pathway and color the nodes.
 
@@ -42,6 +42,7 @@ def overlay_opencv_image(
         the color number.
     transparent_color: list of str
         specify which color to be transparent.
+        If `None`, default `["#FFFFFF", "#BFFFBF"]` is used.
 
     """
     if transparent_colors is None:
@@ -51,7 +52,7 @@ def overlay_opencv_image(
     node_df["y0"] = node_df["y"] + node_df["height"] / 2
 
     if path is not None and os.path.isfile(path):
-        im = cv2.imread(path)
+        image = cv2.imread(path)
     else:
         if pid is not None:
             pid_pref = "".join(re.findall("[a-zA-Z]+", pid))
@@ -59,16 +60,16 @@ def overlay_opencv_image(
                 "https://www.kegg.jp/kegg/pathway/" + pid_pref + "/" + pid + ".png"
             )
             nparr = np.frombuffer(im_res.content, np.uint8)
-            im = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    canvas = np.zeros([im.shape[0], im.shape[1], 3], dtype=np.uint8)
+    canvas = np.zeros([image.shape[0], image.shape[1], 3], dtype=np.uint8)
     canvas.fill(255)
 
-    dst = cv2.cvtColor(im, cv2.COLOR_BGR2BGRA)
+    dst = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     for col in transparent_colors:
-        h = col[1:7]
-        cand_color = tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
-        mask = np.all(im[:, :, :] == list(cand_color), axis=-1)
+        hex_str = col[1:7]
+        cand_color = tuple(int(hex_str[i : i + 2], 16) for i in (0, 2, 4))
+        mask = np.all(image[:, :, :] == list(cand_color), axis=-1)
         dst[mask, 3] = 0
 
     for i in node_df.index:
@@ -84,8 +85,8 @@ def overlay_opencv_image(
         if isinstance(tmp_col, list):
             num_col = len(tmp_col)
             nudge = tmp["width"] / num_col
-            for e, one_tmp_col in enumerate(tmp_col):
-                new_width = tmp["width"] - (nudge * e)
+            for col_num, one_tmp_col in enumerate(tmp_col):
+                new_width = tmp["width"] - (nudge * col_num)
                 canvas = cv2.rectangle(
                     img=canvas,
                     rec=(
@@ -108,6 +109,13 @@ def overlay_opencv_image(
 
 
 def overlay(rects, kegg_map):
+    """overlay two images with transparency
+
+    Parameters:
+    -----------
+    rects: np.array
+    kegg_map: np.array
+    """
     rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
     rects = Image.fromarray(rects).convert("RGBA")
     kegg_map = cv2.cvtColor(kegg_map, cv2.COLOR_BGRA2RGBA)
@@ -117,38 +125,60 @@ def overlay(rects, kegg_map):
 
 
 def plot_kegg_pathway_plotnine(
-    g,
-    node_x_nudge=20,
-    node_y_nudge=10,
-    split_graphics_name=True,
-    subtype_num=0,
-    label_size=2,
-    show_label="gene",
-    edge_color="subtype",
-    text_label="graphics_name",
+        graph,
+        node_x_nudge=20,
+        node_y_nudge=10,
+        split_graphics_name=True,
+        subtype_num=0,
+        label_size=2,
+        show_label="gene",
+        edge_color="subtype",
+        text_label="graphics_name",
 ):
-    nddf = g.get_nodes(node_x_nudge=node_x_nudge, node_y_nudge=node_y_nudge)
-    eddf = g.get_edges()
+    """Plot KEGG pathway using plotnine.
+    Parameters:
+    -----------
+    graph: KGML_graph class
+        graph object obtained by `KGML_graph()`.
+    node_x_nudge: int
+        nudge the x position of nodes.
+    node_y_nudge: int
+        nudge the y position of nodes.
+    split_graphics_name: bool
+        if True, split the graphics_name by comma and use the first one.
+    subtype_num: int
+        the number of subtypes to be used for the edge label.
+    label_size: int
+        the size of the label.
+    show_label: str
+        the type of label to be shown, e.g. "gene", "compound".
+    edge_color: str
+        the column in `edge_df` specifying edge color.
+    text_label: str
+        the column in `node_df` specifying node label.
+    """
+    node_df = graph.get_nodes(node_x_nudge=node_x_nudge, node_y_nudge=node_y_nudge)
+    edge_df = graph.get_edges()
     if split_graphics_name:
-        nddf["graphics_name"] = nddf.graphics_name.apply(lambda x: x.split(",")[0])
+        node_df["graphics_name"] = node_df.graphics_name.apply(lambda x: x.split(",")[0])
 
     seg_df = pd.concat(
         [
-            nddf.reset_index()
+            node_df.reset_index()
             .set_index("id")
-            .loc[eddf.entry1]
+            .loc[edge_df.entry1]
             .reset_index()
             .loc[:, ["x", "y"]],
-            nddf.reset_index()
+            node_df.reset_index()
             .set_index("id")
-            .loc[eddf.entry2]
+            .loc[edge_df.entry2]
             .reset_index()
             .loc[:, ["x", "y"]],
         ],
         axis=1,
     )
     seg_df.columns = ["x", "y", "xend", "yend"]
-    seg_df = pd.concat([seg_df, eddf], axis=1)
+    seg_df = pd.concat([seg_df, edge_df], axis=1)
 
     seg_df["subtype"] = seg_df.subtypes.apply(
         lambda x: x[0][subtype_num] if x is not None else x
@@ -161,19 +191,19 @@ def plot_kegg_pathway_plotnine(
         )
         + geom_rect(
             aes(xmin="xmin", ymin="ymin", xmax="xmax", ymax="ymax"),
-            data=nddf[nddf.original_type == "gene"],
+            data=node_df[node_df.original_type == "gene"],
             fill="white",
             color="grey",
         )
         + geom_rect(
             aes(xmin="xmin", ymin="ymin", xmax="xmax", ymax="ymax"),
-            data=nddf[nddf.original_type == "compound"],
+            data=node_df[node_df.original_type == "compound"],
             fill="white",
             color="grey",
         )
         + geom_text(
             aes(x="x", y="y", label=text_label, filter="original_type!='group'"),
-            data=nddf[nddf.original_type == show_label],
+            data=node_df[node_df.original_type == show_label],
             size=label_size,
         )
         + theme_void()
@@ -182,6 +212,14 @@ def plot_kegg_pathway_plotnine(
 
 
 def plot_kegg_global_map_plotnine(graph, hide_map=True):
+    """Plot KEGG global map using plotnine.
+    Parameters:
+    -----------
+    graph: KGML_graph class
+        graph object of global map like ko01100, obtained by `KGML_graph()`.
+    hide_map: bool
+        if True, hide the map nodes.
+    """
     node_df = graph.get_nodes()
     coords = graph.get_coords()
     if hide_map:
@@ -200,9 +238,8 @@ def plot_kegg_global_map_plotnine(graph, hide_map=True):
 
 
 def color_grad(
-    minimum=-2, maximum=2, seq=0.1,
-    min_col="#ffffff", max_col="#ff0000",
-    round_num=2
+        minimum=-2, maximum=2, seq=0.1,
+        min_col="#ffffff", max_col="#ff0000", round_num=2
 ):
     minmax = np.arange(minimum, maximum, seq)
     num_seq = len(minmax)
@@ -211,9 +248,17 @@ def color_grad(
         rounded = np.round(minmax[num], round_num)
         color1 = np.array(mpl.colors.to_rgb(min_col))
         color2 = np.array(mpl.colors.to_rgb(max_col))
-        conv[rounded] = mpl.colors.to_hex((1 - num / num_seq) * color1 + num / num_seq * color2)
+        conv[rounded] = mpl.colors.to_hex(
+            (1 - num / num_seq) * color1 + num / num_seq * color2
+        )
     return conv
 
 
 def hex2rgb(hex_str):
+    """Convert hex string to rgb tuple.
+    Parameters:
+    ----------
+    hex_str: str
+        hex string, e.g. "#ffffff".
+    """
     return tuple(int(hex_str.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
