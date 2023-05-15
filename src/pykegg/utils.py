@@ -162,6 +162,14 @@ def plot_kegg_pathway_plotnine(
     if split_graphics_name:
         node_df["graphics_name"] = node_df.graphics_name.apply(lambda x: x.split(",")[0])
 
+    ## Collapse subtypes
+    edge_df_col = []
+    for i in edge_df.index:
+        tmp = edge_df.iloc[i, :]
+        for subtype in tmp.subtypes:
+            edge_df_col.append([tmp.entry1, tmp.entry2, tmp.type, subtype, tmp.reaction])
+    edge_df = pd.DataFrame(edge_df_col)
+    edge_df.columns = ["entry1", "entry2", "type", "subtypes", "reaction"]
     seg_df = pd.concat(
         [
             node_df.reset_index()
@@ -180,8 +188,10 @@ def plot_kegg_pathway_plotnine(
     seg_df.columns = ["x", "y", "xend", "yend"]
     seg_df = pd.concat([seg_df, edge_df], axis=1)
 
+    ## [TODO] implement multiple edges like `geom_edge_parallel` in ggraph
+    ## Currently edges are overlapped.
     seg_df["subtype"] = seg_df.subtypes.apply(
-        lambda x: x[0][subtype_num] if x is not None else x
+        lambda x: x[subtype_num] if x is not None else x
     )
 
     plot = (
