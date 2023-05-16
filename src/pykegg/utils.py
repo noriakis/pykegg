@@ -25,6 +25,9 @@ def overlay_opencv_image(
         pid=None,
         fill_color="color",
         transparent_colors=None,
+        highlight_nodes=None,
+        highlight_color="#ff0000",
+        highlight_expand=2,
 ):
     """Obtain the raw image of pathway and color the nodes.
 
@@ -39,11 +42,16 @@ def overlay_opencv_image(
     fill_color: str
         the column in `node_df` specifying color in HEX.
         If list is given, split the width according to
-        the color number.
+        the color number. Skip the node if `None`.
     transparent_color: list of str
         specify which color to be transparent.
         If `None`, default `["#FFFFFF", "#BFFFBF"]` is used.
-
+    highlight_nodes: str
+        the column in `node_df` specifying which nodes to be highlighted.
+    hihglight_color: str
+        the color of the highlighted nodes.
+    highlight_expand: int
+        the number of pixels to expand the highlighted nodes.
     """
     if transparent_colors is None:
         transparent_colors = ["#FFFFFF", "#BFFFBF"]
@@ -82,6 +90,8 @@ def overlay_opencv_image(
         )
 
         tmp_col = tmp[fill_color]
+        if tmp_col is None:
+            break
         if isinstance(tmp_col, list):
             num_col = len(tmp_col)
             nudge = tmp["width"] / num_col
@@ -93,7 +103,7 @@ def overlay_opencv_image(
                         int(tmp["x0"]),
                         int(-1 * tmp["y0"]),
                         int(new_width),
-                        int(tmp["height"]),
+                        int(tmp["height"])
                     ),
                     color=hex2rgb(one_tmp_col),
                     thickness=-1,
@@ -102,6 +112,26 @@ def overlay_opencv_image(
         else:
             canvas = cv2.rectangle(
                 img=canvas, rec=pos, color=hex2rgb(tmp_col), thickness=-1
+            )
+
+    ## Highlight the nodes by rectangle
+    if highlight_nodes is not None:
+        highlight_node_df = node_df[node_df[highlight_nodes]]
+        for i in highlight_node_df.index:
+            tmp = highlight_node_df.loc[i, :]
+            pos = (
+                int(tmp["x0"]),
+                int(-1 * tmp["y0"]),
+                int(tmp["width"]),
+                int(tmp["height"])
+            )
+            canvas = cv2.rectangle(
+                img=canvas,
+                pt1=(pos[0]-int(highlight_expand),
+                     pos[1]-int(highlight_expand)), 
+                pt2=(pos[0]+pos[2]+int(highlight_expand),
+                     pos[1]+pos[3]+int(highlight_expand)),
+                color=hex2rgb(highlight_color)
             )
 
     image = overlay(canvas, dst)
