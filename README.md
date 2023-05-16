@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 import pykegg
 
-## Cache all the downloaded 
+## Be sure to cache all the downloaded files to avoid recursive querying
 requests_cache.install_cache('pykegg_cache')
 g = pykegg.KGML_graph(pid="hsa03460")
 
@@ -28,3 +28,7 @@ Image.fromarray(pykegg.overlay_opencv_image(nds, pid="hsa03460"))
 # options.figure_size = (7,5)
 pykegg.plot_kegg_pathway_plotnine(g, node_x_nudge=25, label_size=5, show_label="gene")
 ```
+
+## TODO
+- [ ] The function for converting identifiers (especially for ENTREZID <=> SYMBOL) without connection to servers, like using [`genomic-features`](https://genomic-features.readthedocs.io/en/latest/).
+- [ ] Parallel edge support by nudging x and y position
