@@ -168,6 +168,7 @@ def plot_kegg_pathway_plotnine(
         text_label="graphics_name",
 ):
     """Plot KEGG pathway using plotnine.
+
     Parameters:
     -----------
     graph: KGML_graph class
@@ -259,6 +260,7 @@ def plot_kegg_pathway_plotnine(
 
 def plot_kegg_global_map_plotnine(graph, hide_map=True):
     """Plot KEGG global map using plotnine.
+
     Parameters:
     -----------
     graph: KGML_graph class
@@ -287,6 +289,7 @@ def color_grad(
         low=-2, high=2, seq=0.01, low_col="#ffffff", high_col="#ff0000", round_num=2
 ):
     """Generate color gradient.
+
     Parameters:
     -----------
     low: float
@@ -317,6 +320,7 @@ def color_grad(
 
 def hex2rgb(hex_str):
     """Convert hex string to rgb tuple.
+
     Parameters:
     ----------
     hex_str: str

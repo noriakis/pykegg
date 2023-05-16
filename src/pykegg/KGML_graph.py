@@ -1,4 +1,3 @@
-# import re
 import os
 import igraph
 import requests
@@ -8,11 +7,11 @@ import numpy as np
 
 from Bio.KEGG.KGML.KGML_parser import read
 
-
 class KGML_graph:
     """KGML graph object."""
     def __init__(self, path=None, pid=None):
         """Initialize KGML graph object.
+
         Parameters:
         ----------
         path: str
@@ -30,11 +29,11 @@ class KGML_graph:
 
     def get_graph(self, layout="native"):
         """Get igraph object of the KGML graph.
+
         Parameters:
         ----------
         layout: str
-            layout of the graph. If `native`, the original
-            layout of the KGML file is used.
+            layout of the graph. If `native`, the original layout of the KGML file is used.
         """
         edge_df = self.get_edges()
         node_df = self.get_nodes()
@@ -63,6 +62,7 @@ class KGML_graph:
 
     def get_edges(self):
         """Get edges DataFrame of the KGML graph."""
+
         rel_list = [
             [
                 relation.entry1.id,
@@ -97,6 +97,7 @@ class KGML_graph:
 
     def get_nodes(self, node_x_nudge=5, node_y_nudge=5):
         """Get nodes DataFrame of the KGML graph."""
+
         compounds = pd.DataFrame(
             [
                 c[0]
@@ -259,6 +260,7 @@ class KGML_graph:
 
     def get_coords(self):
         """Transform coords positions to edge DataFrame."""
+
         all_ortho = []
         for ortho in self.pathway.orthologs:
             graphics = ortho.graphics
