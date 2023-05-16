@@ -1,8 +1,7 @@
 # pykegg
-Analyze and visualize KEGG information using network approach
+Analyze and visualize KEGG information using network approach.
 
 Using `biopython`, `igraph` and [`plotnine`](https://github.com/has2k1/plotnine), parse the KGML into `igraph` and easily plot the relevant information contained in KEGG Pathway in Python environment.
-
 
 ```python
 import requests_cache
@@ -28,6 +27,8 @@ Image.fromarray(pykegg.overlay_opencv_image(nds, pid="hsa03460"))
 # options.figure_size = (7,5)
 pykegg.plot_kegg_pathway_plotnine(g, node_x_nudge=25, label_size=5, show_label="gene")
 ```
+
+## [Documentation](https://pykegg.readthedocs.io/)
 
 ## TODO
 - [ ] The function for converting identifiers (especially for ENTREZID <=> SYMBOL) without connection to servers, like using [`genomic-features`](https://genomic-features.readthedocs.io/en/latest/).
