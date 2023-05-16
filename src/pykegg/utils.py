@@ -18,6 +18,7 @@ from plotnine import (
     geom_text,
 )
 
+import pykegg
 
 def overlay_opencv_image(
         node_df,
@@ -103,7 +104,7 @@ def overlay_opencv_image(
                         int(tmp["x0"]),
                         int(-1 * tmp["y0"]),
                         int(new_width),
-                        int(tmp["height"])
+                        int(tmp["height"]),
                     ),
                     color=hex2rgb(one_tmp_col),
                     thickness=-1,
@@ -123,15 +124,16 @@ def overlay_opencv_image(
                 int(tmp["x0"]),
                 int(-1 * tmp["y0"]),
                 int(tmp["width"]),
-                int(tmp["height"])
+                int(tmp["height"]),
             )
             canvas = cv2.rectangle(
                 img=canvas,
-                pt1=(pos[0]-int(highlight_expand),
-                     pos[1]-int(highlight_expand)), 
-                pt2=(pos[0]+pos[2]+int(highlight_expand),
-                     pos[1]+pos[3]+int(highlight_expand)),
-                color=hex2rgb(highlight_color)
+                pt1=(pos[0] - int(highlight_expand), pos[1] - int(highlight_expand)),
+                pt2=(
+                    pos[0] + pos[2] + int(highlight_expand),
+                    pos[1] + pos[3] + int(highlight_expand),
+                ),
+                color=hex2rgb(highlight_color),
             )
 
     image = overlay(canvas, dst)
@@ -190,14 +192,18 @@ def plot_kegg_pathway_plotnine(
     node_df = graph.get_nodes(node_x_nudge=node_x_nudge, node_y_nudge=node_y_nudge)
     edge_df = graph.get_edges()
     if split_graphics_name:
-        node_df["graphics_name"] = node_df.graphics_name.apply(lambda x: x.split(",")[0])
+        node_df["graphics_name"] = node_df.graphics_name.apply(
+            lambda x: x.split(",")[0]
+        )
 
     ## Collapse subtypes
     edge_df_col = []
     for i in edge_df.index:
         tmp = edge_df.iloc[i, :]
         for subtype in tmp.subtypes:
-            edge_df_col.append([tmp.entry1, tmp.entry2, tmp.type, subtype, tmp.reaction])
+            edge_df_col.append(
+                [tmp.entry1, tmp.entry2, tmp.type, subtype, tmp.reaction]
+            )
     edge_df = pd.DataFrame(edge_df_col)
     edge_df.columns = ["entry1", "entry2", "type", "subtypes", "reaction"]
     seg_df = pd.concat(
@@ -278,18 +284,33 @@ def plot_kegg_global_map_plotnine(graph, hide_map=True):
 
 
 def color_grad(
-        minimum=-2, maximum=2, seq=0.1,
-        min_col="#ffffff", max_col="#ff0000", round_num=2
+        low=-2, high=2, seq=0.01, low_col="#ffffff", high_col="#ff0000", round_num=2
 ):
-    minmax = np.arange(minimum, maximum, seq)
+    """Generate color gradient.
+    Parameters:
+    -----------
+    low: float
+        the lowest value.
+    high: float
+        the highest value.
+    seq: float
+        the sequence of the values.
+    low_col: str
+        the lowest color in HEX.
+    high_col: str
+        the highest color in HEX.
+    round_num: int
+        the number of digits to round.
+    """
+    minmax = np.arange(low, high, seq)
     num_seq = len(minmax)
     conv = {}
     for num in range(num_seq):
         rounded = np.round(minmax[num], round_num)
-        color1 = np.array(mpl.colors.to_rgb(min_col))
-        color2 = np.array(mpl.colors.to_rgb(max_col))
+        color1 = np.array(mpl.colors.to_rgb(low_col))
+        color2 = np.array(mpl.colors.to_rgb(high_col))
         conv[rounded] = mpl.colors.to_hex(
-            (1 - num / num_seq) * color1 + num / num_seq * color2
+            (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
         )
     return conv
 
@@ -302,3 +323,99 @@ def hex2rgb(hex_str):
         hex string, e.g. "#ffffff".
     """
     return tuple(int(hex_str.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+
+
+def deseq2_raw_map(
+        results_df,
+        path=None,
+        pid=None,
+        node_name_column="graphics_name",
+        color_column="log2FoldChange",
+        highlight_sig=False,
+        highlight_color="#ff0000",
+        highlight_padj_thresh=0.05,
+):
+    if ~highlight_sig:
+        highlight_column = None
+
+    sig_genes = results_df[results_df["padj"] < highlight_padj_thresh].index
+    lfc_key = results_df[color_column].to_dict()
+
+    graph = pykegg.KGML_graph(path=path, pid=pid)
+    node_df = graph.get_nodes()
+
+    if highlight_sig:
+        highlight_value = []
+        for node in node_df[node_name_column]:
+            in_node = [i.replace("...", "") for i in node.split(",")]
+            intersect = set(in_node) & set(sig_genes)
+            if len(intersect) > 0:
+                highlight_value.append(True)
+            else:
+                highlight_value.append(False)
+        node_df["highlight"] = highlight_value
+        highlight_column = "highlight"
+
+    node_value = []
+
+    for node in node_df[node_name_column]:
+        ## Currently only graphics name is supported
+        in_node = [i.replace("...", "") for i in node.split(",")]
+        intersect = set(in_node) & set(lfc_key.keys())
+        if len(intersect) > 0:
+            tmp = [lfc_key[i] for i in lfc_key if i in intersect]
+            node_value.append(np.mean(tmp))
+        else:
+            node_value.append(None)
+    values = [n for n in node_value if n is not None]
+    col_dic = color_grad2(
+        low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01
+    )
+
+    node_df["color"] = [
+        col_dic[np.round(x, 2)] if x is not None else None for x in node_value
+    ]
+
+    im_arr = Image.fromarray(
+        overlay_opencv_image(
+            node_df,
+            path=path,
+            pid=pid,
+            highlight_nodes=highlight_column,
+            highlight_color=highlight_color,
+        )
+    )
+    return im_arr
+
+
+def color_grad2(
+        low=-2,
+        mid=0,
+        high=2,
+        seq=0.01,
+        low_col="#00ffff",
+        mid_col="#ffffff",
+        high_col="#ff0000",
+        round_num=2,
+):
+    low_mid = np.arange(low, mid + seq, seq)
+    mid_high = np.arange(mid, high + seq, seq)
+
+    num_seq = len(low_mid)
+    conv = {}
+    for num in range(num_seq):
+        rounded = np.round(low_mid[num], round_num)
+        color1 = np.array(mpl.colors.to_rgb(low_col))
+        color2 = np.array(mpl.colors.to_rgb(mid_col))
+        conv[rounded] = mpl.colors.to_hex(
+            (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
+        )
+    num_seq = len(mid_high)
+    for num in range(num_seq):
+        rounded = np.round(mid_high[num], round_num)
+        color1 = np.array(mpl.colors.to_rgb(mid_col))
+        color2 = np.array(mpl.colors.to_rgb(high_col))
+        conv[rounded] = mpl.colors.to_hex(
+            (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
+        )
+    return conv
