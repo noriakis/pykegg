@@ -13,10 +13,10 @@ class KGML_graph:
         """Initialize KGML graph object.
 
         Parameters:
-        ----------
-        path: str
+        -----------
+        path : str
             path to the KGML file.
-        pid: str
+        pid : str
             KEGG pathway identifier.
         """
         if path is not None and os.path.isfile(path):
@@ -31,8 +31,8 @@ class KGML_graph:
         """Get igraph object of the KGML graph.
 
         Parameters:
-        ----------
-        layout: str
+        -----------
+        layout : str
             layout of the graph. If `native`, the original layout of the KGML file is used.
         """
         edge_df = self.get_edges()

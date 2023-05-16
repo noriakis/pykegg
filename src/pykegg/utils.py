@@ -322,7 +322,7 @@ def hex2rgb(hex_str):
     """Convert hex string to rgb tuple.
 
     Parameters:
-    ----------
+    -----------
     hex_str: str
         hex string, e.g. "#ffffff".
     """
