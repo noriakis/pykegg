@@ -20,15 +20,16 @@ from plotnine import (
 
 import pykegg
 
+
 def overlay_opencv_image(
-        node_df,
-        path=None,
-        pid=None,
-        fill_color="color",
-        transparent_colors=None,
-        highlight_nodes=None,
-        highlight_color="#ff0000",
-        highlight_expand=2,
+    node_df,
+    path=None,
+    pid=None,
+    fill_color="color",
+    transparent_colors=None,
+    highlight_nodes=None,
+    highlight_color="#ff0000",
+    highlight_expand=2,
 ):
     """Obtain the raw image of pathway and color the nodes.
 
@@ -157,15 +158,15 @@ def overlay(rects, kegg_map):
 
 
 def plot_kegg_pathway_plotnine(
-        graph,
-        node_x_nudge=20,
-        node_y_nudge=10,
-        split_graphics_name=True,
-        subtype_num=0,
-        label_size=2,
-        show_label="gene",
-        edge_color="subtype",
-        text_label="graphics_name",
+    graph,
+    node_x_nudge=20,
+    node_y_nudge=10,
+    split_graphics_name=True,
+    subtype_num=0,
+    label_size=2,
+    show_label="gene",
+    edge_color="subtype",
+    text_label="graphics_name",
 ):
     """Plot KEGG pathway using plotnine.
 
@@ -286,7 +287,7 @@ def plot_kegg_global_map_plotnine(graph, hide_map=True):
 
 
 def color_grad(
-        low=-2, high=2, seq=0.01, low_col="#ffffff", high_col="#ff0000", round_num=2
+    low=-2, high=2, seq=0.01, low_col="#ffffff", high_col="#ff0000", round_num=2
 ):
     """Generate color gradient.
 
@@ -330,14 +331,14 @@ def hex2rgb(hex_str):
 
 
 def deseq2_raw_map(
-        results_df,
-        path=None,
-        pid=None,
-        node_name_column="graphics_name",
-        color_column="log2FoldChange",
-        highlight_sig=False,
-        highlight_color="#ff0000",
-        highlight_padj_thresh=0.05,
+    results_df,
+    path=None,
+    pid=None,
+    node_name_column="graphics_name",
+    color_column="log2FoldChange",
+    highlight_sig=False,
+    highlight_color="#ff0000",
+    highlight_padj_thresh=0.05,
 ):
     if ~highlight_sig:
         highlight_column = None
@@ -393,14 +394,14 @@ def deseq2_raw_map(
 
 
 def color_grad2(
-        low=-2,
-        mid=0,
-        high=2,
-        seq=0.01,
-        low_col="#00ffff",
-        mid_col="#ffffff",
-        high_col="#ff0000",
-        round_num=2,
+    low=-2,
+    mid=0,
+    high=2,
+    seq=0.01,
+    low_col="#00ffff",
+    mid_col="#ffffff",
+    high_col="#ff0000",
+    round_num=2,
 ):
     low_mid = np.arange(low, mid + seq, seq)
     mid_high = np.arange(mid, high + seq, seq)
@@ -423,3 +424,44 @@ def color_grad2(
             (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
         )
     return conv
+
+
+def append_colors(
+    node_df,
+    candidate,
+    new_column_name="color",
+    candidate_column="graphics_name",
+    delim=",",
+    true_color="#ff0000",
+    false_color="#ffffff",
+):
+    """Append colors to the node_df based on intersection with candidate ID list.
+
+    Parameters:
+    -----------
+    node_df: DataFrame
+        node data obtained by `get_nodes()`.
+    candidate: list
+        list of candidate IDs.
+    new_column_name: str
+        the name of the new column.
+    candidate_column: str
+        the column in `node_df` specifying candidate IDs.
+    delim: str
+        the delimiter of the node IDs. Typically "," for graphics_name,
+        and " " for name.
+    true_color: str
+        the color of the candidate nodes.
+    false_color: str
+        the color of the non-candidate nodes.
+    """
+    colors = []
+    for i in node_df[candidate_column]:
+        in_node = set([i.replace(" ", "").replace("...", "") for i in i.split(delim)])
+        intersect = set(candidate) & in_node
+        if len(intersect) > 0:
+            colors.append(true_color)
+        else:
+            colors.append(false_color)
+    node_df[new_column_name] = colors
+    return node_df
