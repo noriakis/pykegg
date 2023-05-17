@@ -98,15 +98,16 @@ def overlay_opencv_image(
             num_col = len(tmp_col)
             nudge = tmp["width"] / num_col
             for col_num, one_tmp_col in enumerate(tmp_col):
-                new_width = tmp["width"] - (nudge * col_num)
+                new_x0 = tmp["x0"] + (nudge * col_num)
+                pt2 = (int(tmp["x"] + tmp["width"] / 2),
+                       int(-1 * tmp["y"] + tmp["height"] / 2))
                 canvas = cv2.rectangle(
                     img=canvas,
-                    rec=(
-                        int(tmp["x0"]),
-                        int(-1 * tmp["y0"]),
-                        int(new_width),
-                        int(tmp["height"]),
+                    pt1=(
+                        int(new_x0),
+                        int(-1 * tmp["y0"])
                     ),
+                    pt2 = pt2,
                     color=hex2rgb(one_tmp_col),
                     thickness=-1,
                 )
@@ -455,6 +456,8 @@ def append_colors(
     false_color: str
         the color of the non-candidate nodes.
     """
+    if candidate_column=="name":
+        delim=" "
     colors = []
     for i in node_df[candidate_column]:
         in_node = set([i.replace(" ", "").replace("...", "") for i in i.split(delim)])
@@ -465,3 +468,50 @@ def append_colors(
             colors.append(false_color)
     node_df[new_column_name] = colors
     return node_df
+
+def visualize_gseapy(gsea_res, colors,
+                     pathway_name=None, pathway_id=None,
+                     column_name="graphics_name",
+                     false_color="#707070"):
+    if not isinstance(gsea_res, list):
+        gsea_res = [gsea_res]
+    if len(gsea_res) != len(colors):
+        return
+    
+    ## Determine pathway name if not specified
+    if pathway_name is None:
+        if len(gsea_res) == 1:
+            pathway_name = gsea_res[0].res2d.iloc[0,"Term"]
+        else:
+            pathway_names = []
+            for res in gsea_res:
+                pathway_names.append(set(res.res2d.Term))
+            all_intersection = set.intersection(*pathway_names)
+            if len(all_intersection) == 0:
+                return
+            first_res = gsea_res[0][gsea_res[0].Term.isin(list(all_intersection))]
+            pathway_name = first_res.sort_values(by="P-value").Term.tolist()[0]
+    
+    ## [TODO] Fetch pathway ID given Term
+    if pathway_id is None:
+        return
+    
+    graph = pykegg.KGML_graph(pid=pathway_id)
+    nodes = graph.get_nodes()
+    for node in nodes[column_name]:
+        for e, res in enumerate(gsea_res):
+            genes = res.res2d[res.res2d.Term==pathway_name].Genes.tolist()[0].split(";")
+            nodes = append_colors(nodes, genes, new_column_name="color"+str(e),
+                                  candidate_column=column_name,
+                                  true_color=colors[e],
+                                 false_color=false_color)
+    
+    col_col = [i for i in nodes.columns if i.startswith("color")]
+    qc = list()
+    for id in nodes.id:
+        tmp = nodes[nodes.id==id].loc[:, col_col]
+        tmp_colors = tmp.iloc[0,:].tolist()
+        qc.append(tmp_colors)
+    nodes["color"] = qc
+    kegg_map = pykegg.overlay_opencv_image(nodes, pid=pathway_id)
+    return kegg_map
