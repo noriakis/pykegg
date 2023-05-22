@@ -2,12 +2,14 @@ import re
 import os
 import requests
 import cv2
+import warnings
 
 import numpy as np
 import matplotlib as mpl
 import pandas as pd
 
 from PIL import Image
+from io import StringIO
 from plotnine import (
     ggplot,
     geom_point,
@@ -471,6 +473,7 @@ def append_colors(
 
 def visualize_gseapy(gsea_res, colors,
                      pathway_name=None, pathway_id=None,
+                     org="hsa",
                      column_name="graphics_name",
                      false_color="#707070"):
     if not isinstance(gsea_res, list):
@@ -493,8 +496,9 @@ def visualize_gseapy(gsea_res, colors,
             pathway_name = first_res.sort_values(by="P-value").Term.tolist()[0]
     
     ## [TODO] Fetch pathway ID given Term
+    ## Still we need to specify organism name
     if pathway_id is None:
-        return
+        pathway_id = pathway_name_to_id_dict(list_id=org)[pathway_name]
     
     graph = pykegg.KGML_graph(pid=pathway_id)
     nodes = graph.get_nodes()
@@ -515,3 +519,37 @@ def visualize_gseapy(gsea_res, colors,
     nodes["color"] = qc
     kegg_map = pykegg.overlay_opencv_image(nodes, pid=pathway_id)
     return kegg_map
+
+
+def pathway_name_to_id_dict(list_id="hsa"):
+    response = requests.get("https://rest.kegg.jp/list/pathway/"+list_id)
+    check_cache(response)
+    df = pd.read_csv(StringIO(
+        response.content.decode("utf-8")
+    ), sep="\t", header=None)
+    df.index = df[1].apply(lambda x: x.split(" - ")[0])
+    return df[0].to_dict()
+
+
+def id_to_name_dict(list_id="hsa", column=3, semicolon=True, comma=True):
+    response = requests.get("https://rest.kegg.jp/list/"+list_id)
+    check_cache(response)
+
+    df = pd.read_csv(StringIO(
+        response.content.decode("utf-8")
+    ), sep="\t", header=None)
+    if semicolon:
+        semicolon_df = df[3].apply(lambda x: x.split(";")[0])
+    else:
+        semicolon_df = df[3]
+    if comma:
+        comma_df = semicolon_df.apply(lambda x: x.split(",")[0])
+    else:
+        comma_df = semicolon_df
+    comma_df.index = df[0]
+    return comma_df.to_dict()
+
+
+def check_cache(response):
+    if not response.from_cache:
+        warnings.warn("If it is not the first time fetching, please use requests_cache for caching")
