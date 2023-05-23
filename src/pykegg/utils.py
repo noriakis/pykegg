@@ -594,6 +594,69 @@ delim=",", low_col="#00ffff", mid_col="#ffffff", high_col="#ff0000",):
 
     return node_df
 
+
+def overlay_continuous_values_with_legend(
+    node_df, value_dict, path=None, pid=None,
+    node_name_column="graphics_name",
+    delim=",", colors=None,
+    legend_label="value",
+    legend_position="topright",
+    legend_width=1,
+    legend_height=0.6,
+    legend_bottom=0.8,
+    transparent_colors=None,
+):
+    """Obtain the raw image of pathway and color the nodes, return the overlaid image with legend.
+
+    Parameters:
+    -----------
+    node_df: DataFrame
+        node data obtained by `get_nodes()`.
+    """
+    if transparent_colors is None:
+        transparent_colors = ["#FFFFFF", "#BFFFBF"]
+    node_value = []
+    for node in node_df[node_name_column]:
+        ## Currently only graphics name is supported
+        in_node = [i.replace("...", "") for i in node.split(delim)]
+        intersect = set(in_node) & set(value_dict.keys())
+        if len(intersect) > 0:
+            tmp = [value_dict[i] for i in value_dict if i in intersect]
+            node_value.append(np.mean(tmp))
+        else:
+            node_value.append(None)
+    values = [n for n in node_value if n is not None]
+
+    if colors is None:
+        colors = ["#0000ff", "#ffffff", "#ff0000"]
+
+    cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
+    norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+    node_df["color"] = [mpl.colors.to_hex(cmap_grad(norm(x)))
+     if x is not None else None for x in node_value]
+
+
+    if path is None and pid is None:
+        ## Infer
+        pid = node_df["pathway_name"].apply(lambda x: x.split(":")[1]).unique().tolist()[0]
+    im_arr = overlay_opencv_image(
+            node_df,
+            path=path,
+            pid=pid,
+            transparent_colors=transparent_colors,
+            )
+
+    im_arr = append_legend(im_arr, min_value=min(values),
+        max_value=max(values), colors=colors,
+              pos=legend_position,
+              width=legend_width, height=legend_height, bottom=legend_bottom,
+              label=legend_label)
+
+    return Image.fromarray(im_arr)
+
+
+
+
 def visualize_gseapy(gsea_res, colors,
                      pathway_name=None, pathway_id=None,
                      org="hsa",

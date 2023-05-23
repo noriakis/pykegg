@@ -95,7 +95,8 @@ class KGML_graph:
 
         return edges
 
-    def get_nodes(self, node_x_nudge=5, node_y_nudge=5):
+    def get_nodes(self, node_x_nudge=5, node_y_nudge=5,
+        append_pathway_name=True):
         """Get nodes DataFrame of the KGML graph."""
 
         compounds = pd.DataFrame(
@@ -256,6 +257,8 @@ class KGML_graph:
         nodes["ymin"] = nodes["y"] - nodes["height"] + node_y_nudge
         nodes["ymax"] = nodes["y"] + nodes["height"] - node_y_nudge
 
+        if append_pathway_name:
+            nodes["pathway_name"] = self.pathway.name
         return nodes
 
     def get_coords(self):
