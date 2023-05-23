@@ -474,7 +474,7 @@ def append_colors(
 
 def append_colors_continuous_values(node_df, lfc_dict,
 node_name_column="graphics_name", new_color_column="color",
-delim=","):
+delim=",", low_col="#00ffff", mid_col="#ffffff", high_col="#ff0000",):
     node_value = []
     for node in node_df[node_name_column]:
         in_node = [i.replace("...", "") for i in node.split(delim)]
@@ -486,7 +486,8 @@ delim=","):
             node_value.append(None)
     values = [n for n in node_value if n is not None]
     col_dic = pykegg.color_grad2(
-        low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01
+        low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01,
+        low_col=low_col, mid_col=mid_col, high_col=high_col
     )
 
     node_df[new_color_column] = [
