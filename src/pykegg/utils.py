@@ -338,6 +338,7 @@ def deseq2_raw_map(
     path=None,
     pid=None,
     node_name_column="graphics_name",
+    delim=",",
     color_column="log2FoldChange",
     highlight_sig=False,
     highlight_color="#ff0000",
@@ -355,7 +356,7 @@ def deseq2_raw_map(
     if highlight_sig:
         highlight_value = []
         for node in node_df[node_name_column]:
-            in_node = [i.replace("...", "") for i in node.split(",")]
+            in_node = [i.replace("...", "") for i in node.split(delim)]
             intersect = set(in_node) & set(sig_genes)
             if len(intersect) > 0:
                 highlight_value.append(True)
@@ -368,7 +369,7 @@ def deseq2_raw_map(
 
     for node in node_df[node_name_column]:
         ## Currently only graphics name is supported
-        in_node = [i.replace("...", "") for i in node.split(",")]
+        in_node = [i.replace("...", "") for i in node.split(delim)]
         intersect = set(in_node) & set(lfc_key.keys())
         if len(intersect) > 0:
             tmp = [lfc_key[i] for i in lfc_key if i in intersect]
@@ -471,6 +472,29 @@ def append_colors(
     node_df[new_column_name] = colors
     return node_df
 
+def append_colors_continuous_values(node_df, lfc_dict,
+node_name_column="graphics_name", new_color_column="color",
+delim=","):
+    node_value = []
+    for node in node_df[node_name_column]:
+        in_node = [i.replace("...", "") for i in node.split(delim)]
+        intersect = set(in_node) & set(lfc_dict.keys())
+        if len(intersect) > 0:
+            tmp = [lfc_dict[i] for i in lfc_dict if i in intersect]
+            node_value.append(np.mean(tmp))
+        else:
+            node_value.append(None)
+    values = [n for n in node_value if n is not None]
+    col_dic = pykegg.color_grad2(
+        low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01
+    )
+
+    node_df[new_color_column] = [
+        col_dic[np.round(x, 2)] if x is not None else None for x in node_value
+    ]
+
+    return node_df
+
 def visualize_gseapy(gsea_res, colors,
                      pathway_name=None, pathway_id=None,
                      org="hsa",
@@ -478,6 +502,8 @@ def visualize_gseapy(gsea_res, colors,
                      false_color="#707070"):
     if not isinstance(gsea_res, list):
         gsea_res = [gsea_res]
+    if not isinstance(colors, list):
+        colors = [colors]
     if len(gsea_res) != len(colors):
         return
     
