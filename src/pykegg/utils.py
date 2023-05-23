@@ -6,6 +6,7 @@ import warnings
 
 import numpy as np
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from PIL import Image
@@ -332,6 +333,73 @@ def hex2rgb(hex_str):
     return tuple(int(hex_str.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
 
 
+
+def return_color_bar(width=1,
+                     height=0.6,
+                     bottom=0.8,
+                     min_value=-2,
+                     max_value=2,
+                     colors=None,
+                     label="Label"):
+    mpl.use('Agg')
+    fig, ax = plt.subplots(figsize=(width, height))
+    fig.subplots_adjust(bottom=bottom)
+    
+    if colors is None:
+        colors = ["#0000ff", "#ffffff", "#ff0000"]
+        
+    cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
+    norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
+    colbar = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_grad),
+                 cax=ax, orientation='horizontal', label=label)
+    fig.canvas.draw()
+    data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+#     with_alpha = np.dstack((data, 255*np.ones((legend.shape[0], legend.shape[1]), dtype=np.uint8)))
+    mpl.pyplot.close()
+    return data
+
+def append_legend(image, min_value=-2, max_value=2,
+                  colors=None, width=1, height=0.6,
+                  bottom=0.8,
+                  pos="topright",
+                  label="Label"):
+    """
+    image: array
+    pos: str
+    """
+    canvas = np.zeros([image.shape[0], image.shape[1], 3], dtype="uint8")
+    canvas.fill(255)
+    legend = return_color_bar(min_value=min_value,
+                             max_value=max_value,
+                             colors=None, label=label,
+                             width=width, height=height,
+                             bottom=bottom)
+
+    if pos=="topright":
+        ## topright
+        canvas[0:legend.shape[0],(canvas.shape[1]-legend.shape[1]):canvas.shape[1],:] = legend
+    elif pos=="bottomright":
+        ## bottomright
+        canvas[(canvas.shape[0]-legend.shape[0]):canvas.shape[0],(canvas.shape[1]-legend.shape[1]):canvas.shape[1],:] = legend
+    elif pos=="bottomleft":
+        ## bottomleft
+        canvas[(canvas.shape[0]-legend.shape[0]):canvas.shape[0],0:legend.shape[1],:] = legend
+    elif pos=="topleft":
+        ## topleft
+        canvas[0:legend.shape[0],0:legend.shape[1],:] = legend
+    else:
+        return
+    
+    dst = cv2.cvtColor(canvas, cv2.COLOR_BGR2BGRA)
+    for col in ["#FFFFFF"]:
+        hex_str = col[1:7]
+        cand_color = tuple(int(hex_str[i : i + 2], 16) for i in (0, 2, 4))
+        mask = np.all(canvas[:, :, :] == list(cand_color), axis=-1)
+        dst[mask, 3] = 0
+    
+    return overlay(image, dst)
+
 def deseq2_raw_map(
     results_df,
     path=None,
@@ -342,6 +410,13 @@ def deseq2_raw_map(
     highlight_sig=False,
     highlight_color="#ff0000",
     highlight_padj_thresh=0.05,
+    colors=None,
+    show_legend=True,
+    legend_label=None,
+    legend_position="topright",
+    legend_width=1,
+    legend_height=0.6,
+    legend_bottom=0.8
 ):
     if ~highlight_sig:
         highlight_column = None
@@ -376,24 +451,45 @@ def deseq2_raw_map(
         else:
             node_value.append(None)
     values = [n for n in node_value if n is not None]
-    col_dic = color_grad2(
-        low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01
-    )
 
-    node_df["color"] = [
-        col_dic[np.round(x, 2)] if x is not None else None for x in node_value
-    ]
+    if colors is None:
+        colors = ["#0000ff", "#ffffff", "#ff0000"]
 
-    im_arr = Image.fromarray(
-        overlay_opencv_image(
+    cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
+    norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+    node_df["color"] = [mpl.colors.to_hex(cmap_grad(norm(x)))
+     if x is not None else None for x in node_value]
+
+    ## If mid-value are needed
+    # col_dic = color_grad2(
+    #     low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01
+    # )
+
+    # node_df["color"] = [
+    #     col_dic[np.round(x, 2)] if x is not None else None for x in node_value
+    # ]
+
+
+    im_arr = overlay_opencv_image(
             node_df,
             path=path,
             pid=pid,
             highlight_nodes=highlight_column,
             highlight_color=highlight_color,
         )
-    )
-    return im_arr
+
+    if legend_label is None:
+        legend_label = color_column
+
+    if show_legend:
+        im_arr = append_legend(im_arr, min_value=min(values),
+            max_value=max(values), colors=colors,
+                  pos=legend_position,
+                  width=legend_width, height=legend_height, bottom=legend_bottom,
+                  label=legend_label)
+
+
+    return Image.fromarray(im_arr)
 
 
 def color_grad2(
@@ -406,6 +502,9 @@ def color_grad2(
     high_col="#ff0000",
     round_num=2,
 ):
+    """Obtain the color gradients based on low, mid, high values
+    """
+
     low_mid = np.arange(low, mid + seq, seq)
     mid_high = np.arange(mid, high + seq, seq)
 
