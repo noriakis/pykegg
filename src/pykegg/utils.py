@@ -84,18 +84,17 @@ def overlay_opencv_image(
         mask = np.all(image[:, :, :] == list(cand_color), axis=-1)
         dst[mask, 3] = 0
 
-    for i in node_df.index:
-        tmp = node_df.iloc[i, :]
+    for i in node_df.id:
+        tmp = node_df[node_df.id==i]
         pos = (
             int(tmp["x0"]),
             int(-1 * tmp["y0"]),
             int(tmp["width"]),
             int(tmp["height"]),
         )
-
-        tmp_col = tmp[fill_color]
+        tmp_col = tmp[fill_color].tolist()[0]
         if tmp_col is None:
-            break
+            continue
         if isinstance(tmp_col, list):
             num_col = len(tmp_col)
             nudge = tmp["width"] / num_col
@@ -122,8 +121,8 @@ def overlay_opencv_image(
     ## Highlight the nodes by rectangle
     if highlight_nodes is not None:
         highlight_node_df = node_df[node_df[highlight_nodes]]
-        for i in highlight_node_df.index:
-            tmp = highlight_node_df.loc[i, :]
+        for i in highlight_node_df.id:
+            tmp = highlight_node_df[highlight_node_df.id==i]
             pos = (
                 int(tmp["x0"]),
                 int(-1 * tmp["y0"]),

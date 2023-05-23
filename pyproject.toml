@@ -1,6 +1,6 @@
 [project]
 name = "pykegg"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Noriaki Sato", email="nori@hgc.jp" },
 ]
@@ -9,6 +9,7 @@ dependencies = [
     "pandas",
     "biopython",
     "plotnine",
+    "requests",
     "opencv-python"
 ]
 description = "Visualizing and analyzing KEGG information in Python"
