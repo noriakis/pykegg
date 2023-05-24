@@ -339,6 +339,8 @@ def return_color_bar(width=1,
                      bottom=0.8,
                      min_value=-2,
                      max_value=2,
+                     two_slope=True,
+                     center_value=0,
                      colors=None,
                      label="Label"):
     mpl.use('Agg')
@@ -349,7 +351,10 @@ def return_color_bar(width=1,
         colors = ["#0000ff", "#ffffff", "#ff0000"]
         
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
-    norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
+    if two_slope:
+        norm = mpl.colors.TwoSlopeNorm(vmin=min_value, vcenter=center_value, vmax=max_value)
+    else:
+        norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
     colbar = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_grad),
                  cax=ax, orientation='horizontal', label=label)
     fig.canvas.draw()
@@ -360,6 +365,7 @@ def return_color_bar(width=1,
     return data
 
 def append_legend(image, min_value=-2, max_value=2,
+                  center_value=0, two_slope=True,
                   colors=None, width=1, height=0.6,
                   bottom=0.8,
                   pos="topright",
@@ -372,7 +378,9 @@ def append_legend(image, min_value=-2, max_value=2,
     canvas.fill(255)
     legend = return_color_bar(min_value=min_value,
                              max_value=max_value,
-                             colors=None, label=label,
+                             center_value=center_value,
+                             two_slope=two_slope,
+                             colors=colors, label=label,
                              width=width, height=height,
                              bottom=bottom)
 
@@ -411,6 +419,8 @@ def deseq2_raw_map(
     highlight_color="#ff0000",
     highlight_padj_thresh=0.05,
     colors=None,
+    two_slope=True,
+    center_value=0,
     show_legend=True,
     legend_label=None,
     legend_position="topright",
@@ -454,9 +464,14 @@ def deseq2_raw_map(
 
     if colors is None:
         colors = ["#0000ff", "#ffffff", "#ff0000"]
-
+    if center_value == "median":
+        center_value = np.median(values)
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
-    norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+    if two_slope:
+        norm = mpl.colors.TwoSlopeNorm(vmin=min(values),
+            vcenter=center_value, vmax=max(values))
+    else:
+        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))        
     node_df["color"] = [mpl.colors.to_hex(cmap_grad(norm(x)))
      if x is not None else None for x in node_value]
 
@@ -483,8 +498,8 @@ def deseq2_raw_map(
 
     if show_legend:
         im_arr = append_legend(im_arr, min_value=min(values),
-            max_value=max(values), colors=colors,
-                  pos=legend_position,
+            max_value=max(values), colors=colors, center_value=center_value,
+                  pos=legend_position, two_slope=two_slope,
                   width=legend_width, height=legend_height, bottom=legend_bottom,
                   label=legend_label)
 
@@ -537,7 +552,7 @@ def append_colors(
     true_color="#ff0000",
     false_color="#ffffff",
 ):
-    """Append colors to the node_df based on intersection with candidate ID list.
+    """Append discrete colors to the node_df based on intersection with candidate ID list.
 
     Parameters:
     -----------
@@ -572,7 +587,7 @@ def append_colors(
 
 def append_colors_continuous_values(node_df, lfc_dict,
 node_name_column="graphics_name", new_color_column="color",
-delim=",", low_col="#00ffff", mid_col="#ffffff", high_col="#ff0000",):
+delim=",", colors=None, two_slope=True, center_value="median"):
     node_value = []
     for node in node_df[node_name_column]:
         in_node = [i.replace("...", "") for i in node.split(delim)]
@@ -583,14 +598,30 @@ delim=",", low_col="#00ffff", mid_col="#ffffff", high_col="#ff0000",):
         else:
             node_value.append(None)
     values = [n for n in node_value if n is not None]
-    col_dic = pykegg.color_grad2(
-        low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01,
-        low_col=low_col, mid_col=mid_col, high_col=high_col
-    )
 
-    node_df[new_color_column] = [
-        col_dic[np.round(x, 2)] if x is not None else None for x in node_value
-    ]
+    if colors is None:
+        colors = ["#0000ff", "#ffffff", "#ff0000"]
+
+    if center_value=="median":
+        center_value = np.median(values)
+
+    cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
+    if two_slope:
+        norm = mpl.colors.TwoSlopeNorm(vmin=min(values),
+            vcenter=center_value, vmax=max(values))
+    else:
+        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))        
+    node_df[new_color_column] = [mpl.colors.to_hex(cmap_grad(norm(x)))
+     if x is not None else None for x in node_value]
+
+    # col_dic = pykegg.color_grad2(
+    #     low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01,
+    #     low_col=low_col, mid_col=mid_col, high_col=high_col
+    # )
+
+    # node_df[new_color_column] = [
+    #     col_dic[np.round(x, 2)] if x is not None else None for x in node_value
+    # ]
 
     return node_df
 
@@ -605,6 +636,8 @@ def overlay_continuous_values_with_legend(
     legend_height=0.6,
     legend_bottom=0.8,
     transparent_colors=None,
+    two_slope=True,
+    center_value="median",
 ):
     """Obtain the raw image of pathway and color the nodes, return the overlaid image with legend.
 
@@ -631,7 +664,15 @@ def overlay_continuous_values_with_legend(
         colors = ["#0000ff", "#ffffff", "#ff0000"]
 
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
-    norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+
+    if center_value=="median":
+        center_value = np.median(values)
+
+    if two_slope:
+        norm = mpl.colors.TwoSlopeNorm(vmin=min(values), vcenter=center_value, vmax=max(values))
+    else:
+        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+
     node_df["color"] = [mpl.colors.to_hex(cmap_grad(norm(x)))
      if x is not None else None for x in node_value]
 
@@ -648,7 +689,7 @@ def overlay_continuous_values_with_legend(
 
     im_arr = append_legend(im_arr, min_value=min(values),
         max_value=max(values), colors=colors,
-              pos=legend_position,
+              pos=legend_position, center_value=center_value,
               width=legend_width, height=legend_height, bottom=legend_bottom,
               label=legend_label)
 

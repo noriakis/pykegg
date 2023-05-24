@@ -270,7 +270,7 @@ class KGML_graph:
             for element in graphics:
                 seg_list = []
                 if element.coords is None:
-                    break
+                    continue
                 for i in range(len(element.coords)):
                     if i < len(element.coords) - 1:
                         seg_list.append(
@@ -280,7 +280,7 @@ class KGML_graph:
                                 element.coords[i + 1][0],
                                 element.coords[i + 1][1],
                                 element.name,
-                                element.reaction,
+                                ortho.reaction,
                                 element.type,
                                 element.fgcolor,
                                 element.bgcolor,
