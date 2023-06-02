@@ -12,7 +12,7 @@ version = '0.0.4'
 # -- General configuration
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
+# sys.path.insert(0, os.path.abspath('../../'))
 
 extensions = [
     'nbsphinx',
@@ -20,11 +20,11 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
-    # 'sphinx.ext.autosummary',
+    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
 ]
 
-# autosummary_generate = True
+autosummary_generate = True
 html_extra_path = ["googleae34d7ef963c9bd7.html"]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
