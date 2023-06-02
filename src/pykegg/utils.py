@@ -1,8 +1,10 @@
 import re
 import os
+import warnings
+from io import StringIO
+
 import requests
 import cv2
-import warnings
 
 import numpy as np
 import matplotlib as mpl
@@ -10,7 +12,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from PIL import Image
-from io import StringIO
 from plotnine import (
     ggplot,
     geom_point,
@@ -86,7 +87,7 @@ def overlay_opencv_image(
         dst[mask, 3] = 0
 
     for i in node_df.id:
-        tmp = node_df[node_df.id==i]
+        tmp = node_df[node_df.id == i]
         pos = (
             int(tmp["x0"]),
             int(-1 * tmp["y0"]),
@@ -101,15 +102,14 @@ def overlay_opencv_image(
             nudge = tmp["width"] / num_col
             for col_num, one_tmp_col in enumerate(tmp_col):
                 new_x0 = tmp["x0"] + (nudge * col_num)
-                pt2 = (int(tmp["x"] + tmp["width"] / 2),
-                       int(-1 * tmp["y"] + tmp["height"] / 2))
+                pt2 = (
+                    int(tmp["x"] + tmp["width"] / 2),
+                    int(-1 * tmp["y"] + tmp["height"] / 2),
+                )
                 canvas = cv2.rectangle(
                     img=canvas,
-                    pt1=(
-                        int(new_x0),
-                        int(-1 * tmp["y0"])
-                    ),
-                    pt2 = pt2,
+                    pt1=(int(new_x0), int(-1 * tmp["y0"])),
+                    pt2=pt2,
                     color=hex2rgb(one_tmp_col),
                     thickness=-1,
                 )
@@ -123,7 +123,7 @@ def overlay_opencv_image(
     if highlight_nodes is not None:
         highlight_node_df = node_df[node_df[highlight_nodes]]
         for i in highlight_node_df.id:
-            tmp = highlight_node_df[highlight_node_df.id==i]
+            tmp = highlight_node_df[highlight_node_df.id == i]
             pos = (
                 int(tmp["x0"]),
                 int(-1 * tmp["y0"]),
@@ -333,80 +333,112 @@ def hex2rgb(hex_str):
     return tuple(int(hex_str.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
 
 
-
-def return_color_bar(width=1,
-                     height=0.6,
-                     bottom=0.8,
-                     min_value=-2,
-                     max_value=2,
-                     two_slope=True,
-                     center_value=0,
-                     colors=None,
-                     label="Label"):
-    mpl.use('Agg')
+def return_color_bar(
+    width=1,
+    height=0.6,
+    bottom=0.8,
+    min_value=-2,
+    max_value=2,
+    two_slope=True,
+    center_value=0,
+    colors=None,
+    label="Label",
+):
+    mpl.use("Agg")
     fig, ax = plt.subplots(figsize=(width, height))
     fig.subplots_adjust(bottom=bottom)
-    
+
     if colors is None:
         colors = ["#0000ff", "#ffffff", "#ff0000"]
-        
+
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
     if two_slope:
-        norm = mpl.colors.TwoSlopeNorm(vmin=min_value, vcenter=center_value, vmax=max_value)
+        norm = mpl.colors.TwoSlopeNorm(
+            vmin=min_value, vcenter=center_value, vmax=max_value
+        )
     else:
         norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
-    colbar = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_grad),
-                 cax=ax, orientation='horizontal', label=label)
+    colbar = fig.colorbar(
+        mpl.cm.ScalarMappable(norm=norm, cmap=cmap_grad),
+        cax=ax,
+        orientation="horizontal",
+        label=label,
+    )
     fig.canvas.draw()
     data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-#     with_alpha = np.dstack((data, 255*np.ones((legend.shape[0], legend.shape[1]), dtype=np.uint8)))
+    #     with_alpha = np.dstack((data, 255*np.ones((legend.shape[0], legend.shape[1]), dtype=np.uint8)))
     mpl.pyplot.close()
     return data
 
-def append_legend(image, min_value=-2, max_value=2,
-                  center_value=0, two_slope=True,
-                  colors=None, width=1, height=0.6,
-                  bottom=0.8,
-                  pos="topright",
-                  label="Label"):
+
+def append_legend(
+    image,
+    min_value=-2,
+    max_value=2,
+    center_value=0,
+    two_slope=True,
+    colors=None,
+    width=1,
+    height=0.6,
+    bottom=0.8,
+    pos="topright",
+    label="Label",
+):
     """
     image: array
     pos: str
     """
     canvas = np.zeros([image.shape[0], image.shape[1], 3], dtype="uint8")
     canvas.fill(255)
-    legend = return_color_bar(min_value=min_value,
-                             max_value=max_value,
-                             center_value=center_value,
-                             two_slope=two_slope,
-                             colors=colors, label=label,
-                             width=width, height=height,
-                             bottom=bottom)
+    legend = return_color_bar(
+        min_value=min_value,
+        max_value=max_value,
+        center_value=center_value,
+        two_slope=two_slope,
+        colors=colors,
+        label=label,
+        width=width,
+        height=height,
+        bottom=bottom,
+    )
 
-    if pos=="topright":
+    if pos == "topright":
         ## topright
-        canvas[0:legend.shape[0],(canvas.shape[1]-legend.shape[1]):canvas.shape[1],:] = legend
-    elif pos=="bottomright":
+        canvas[
+            0 : legend.shape[0],
+            (canvas.shape[1] - legend.shape[1]) : canvas.shape[1],
+            :,
+        ] = legend
+    elif pos == "bottomright":
         ## bottomright
-        canvas[(canvas.shape[0]-legend.shape[0]):canvas.shape[0],(canvas.shape[1]-legend.shape[1]):canvas.shape[1],:] = legend
-    elif pos=="bottomleft":
+        canvas[
+            (canvas.shape[0] - legend.shape[0]) : canvas.shape[0],
+            (canvas.shape[1] - legend.shape[1]) : canvas.shape[1],
+            :,
+        ] = legend
+    elif pos == "bottomleft":
         ## bottomleft
-        canvas[(canvas.shape[0]-legend.shape[0]):canvas.shape[0],0:legend.shape[1],:] = legend
-    elif pos=="topleft":
+        canvas[
+            (canvas.shape[0] - legend.shape[0]) : canvas.shape[0],
+            0 : legend.shape[1],
+            :,
+        ] = legend
+    elif pos == "topleft":
         ## topleft
-        canvas[0:legend.shape[0],0:legend.shape[1],:] = legend
+        canvas[0 : legend.shape[0], 0 : legend.shape[1], :] = legend
     else:
         return
-    
+
     dst = cv2.cvtColor(canvas, cv2.COLOR_BGR2BGRA)
     for col in ["#FFFFFF"]:
         hex_str = col[1:7]
         cand_color = tuple(int(hex_str[i : i + 2], 16) for i in (0, 2, 4))
         mask = np.all(canvas[:, :, :] == list(cand_color), axis=-1)
         dst[mask, 3] = 0
-    
+
     return overlay(image, dst)
+
 
 def deseq2_raw_map(
     results_df,
@@ -426,7 +458,7 @@ def deseq2_raw_map(
     legend_position="topright",
     legend_width=1,
     legend_height=0.6,
-    legend_bottom=0.8
+    legend_bottom=0.8,
 ):
     if ~highlight_sig:
         highlight_column = None
@@ -468,12 +500,15 @@ def deseq2_raw_map(
         center_value = np.median(values)
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
     if two_slope:
-        norm = mpl.colors.TwoSlopeNorm(vmin=min(values),
-            vcenter=center_value, vmax=max(values))
+        norm = mpl.colors.TwoSlopeNorm(
+            vmin=min(values), vcenter=center_value, vmax=max(values)
+        )
     else:
-        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))        
-    node_df["color"] = [mpl.colors.to_hex(cmap_grad(norm(x)))
-     if x is not None else None for x in node_value]
+        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+    node_df["color"] = [
+        mpl.colors.to_hex(cmap_grad(norm(x))) if x is not None else None
+        for x in node_value
+    ]
 
     ## If mid-value are needed
     # col_dic = color_grad2(
@@ -484,25 +519,31 @@ def deseq2_raw_map(
     #     col_dic[np.round(x, 2)] if x is not None else None for x in node_value
     # ]
 
-
     im_arr = overlay_opencv_image(
-            node_df,
-            path=path,
-            pid=pid,
-            highlight_nodes=highlight_column,
-            highlight_color=highlight_color,
-        )
+        node_df,
+        path=path,
+        pid=pid,
+        highlight_nodes=highlight_column,
+        highlight_color=highlight_color,
+    )
 
     if legend_label is None:
         legend_label = color_column
 
     if show_legend:
-        im_arr = append_legend(im_arr, min_value=min(values),
-            max_value=max(values), colors=colors, center_value=center_value,
-                  pos=legend_position, two_slope=two_slope,
-                  width=legend_width, height=legend_height, bottom=legend_bottom,
-                  label=legend_label)
-
+        im_arr = append_legend(
+            im_arr,
+            min_value=min(values),
+            max_value=max(values),
+            colors=colors,
+            center_value=center_value,
+            pos=legend_position,
+            two_slope=two_slope,
+            width=legend_width,
+            height=legend_height,
+            bottom=legend_bottom,
+            label=legend_label,
+        )
 
     return Image.fromarray(im_arr)
 
@@ -517,8 +558,7 @@ def color_grad2(
     high_col="#ff0000",
     round_num=2,
 ):
-    """Obtain the color gradients based on low, mid, high values
-    """
+    """Obtain the color gradients based on low, mid, high values"""
 
     low_mid = np.arange(low, mid + seq, seq)
     mid_high = np.arange(mid, high + seq, seq)
@@ -572,8 +612,8 @@ def append_colors(
     false_color: str
         the color of the non-candidate nodes.
     """
-    if candidate_column=="name":
-        delim=" "
+    if candidate_column == "name":
+        delim = " "
     colors = []
     for i in node_df[candidate_column]:
         in_node = set([i.replace(" ", "").replace("...", "") for i in i.split(delim)])
@@ -585,9 +625,17 @@ def append_colors(
     node_df[new_column_name] = colors
     return node_df
 
-def append_colors_continuous_values(node_df, lfc_dict,
-node_name_column="graphics_name", new_color_column="color",
-delim=",", colors=None, two_slope=True, center_value="median"):
+
+def append_colors_continuous_values(
+    node_df,
+    lfc_dict,
+    node_name_column="graphics_name",
+    new_color_column="color",
+    delim=",",
+    colors=None,
+    two_slope=True,
+    center_value="median",
+):
     node_value = []
     for node in node_df[node_name_column]:
         in_node = [i.replace("...", "") for i in node.split(delim)]
@@ -602,17 +650,20 @@ delim=",", colors=None, two_slope=True, center_value="median"):
     if colors is None:
         colors = ["#0000ff", "#ffffff", "#ff0000"]
 
-    if center_value=="median":
+    if center_value == "median":
         center_value = np.median(values)
 
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
     if two_slope:
-        norm = mpl.colors.TwoSlopeNorm(vmin=min(values),
-            vcenter=center_value, vmax=max(values))
+        norm = mpl.colors.TwoSlopeNorm(
+            vmin=min(values), vcenter=center_value, vmax=max(values)
+        )
     else:
-        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))        
-    node_df[new_color_column] = [mpl.colors.to_hex(cmap_grad(norm(x)))
-     if x is not None else None for x in node_value]
+        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+    node_df[new_color_column] = [
+        mpl.colors.to_hex(cmap_grad(norm(x))) if x is not None else None
+        for x in node_value
+    ]
 
     # col_dic = pykegg.color_grad2(
     #     low=min(values), mid=np.median(values), high=max(values), round_num=2, seq=0.01,
@@ -627,9 +678,13 @@ delim=",", colors=None, two_slope=True, center_value="median"):
 
 
 def overlay_continuous_values_with_legend(
-    node_df, value_dict, path=None, pid=None,
+    node_df,
+    value_dict,
+    path=None,
+    pid=None,
     node_name_column="graphics_name",
-    delim=",", colors=None,
+    delim=",",
+    colors=None,
     legend_label="value",
     legend_position="topright",
     legend_width=1,
@@ -665,55 +720,72 @@ def overlay_continuous_values_with_legend(
 
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
 
-    if center_value=="median":
+    if center_value == "median":
         center_value = np.median(values)
 
     if two_slope:
-        norm = mpl.colors.TwoSlopeNorm(vmin=min(values), vcenter=center_value, vmax=max(values))
+        norm = mpl.colors.TwoSlopeNorm(
+            vmin=min(values), vcenter=center_value, vmax=max(values)
+        )
     else:
         norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
 
-    node_df["color"] = [mpl.colors.to_hex(cmap_grad(norm(x)))
-     if x is not None else None for x in node_value]
-
+    node_df["color"] = [
+        mpl.colors.to_hex(cmap_grad(norm(x))) if x is not None else None
+        for x in node_value
+    ]
 
     if path is None and pid is None:
         ## Infer
-        pid = node_df["pathway_name"].apply(lambda x: x.split(":")[1]).unique().tolist()[0]
+        pid = (
+            node_df["pathway_name"]
+            .apply(lambda x: x.split(":")[1])
+            .unique()
+            .tolist()[0]
+        )
     im_arr = overlay_opencv_image(
-            node_df,
-            path=path,
-            pid=pid,
-            transparent_colors=transparent_colors,
-            )
+        node_df,
+        path=path,
+        pid=pid,
+        transparent_colors=transparent_colors,
+    )
 
-    im_arr = append_legend(im_arr, min_value=min(values),
-        max_value=max(values), colors=colors,
-              pos=legend_position, center_value=center_value,
-              width=legend_width, height=legend_height, bottom=legend_bottom,
-              label=legend_label)
+    im_arr = append_legend(
+        im_arr,
+        min_value=min(values),
+        max_value=max(values),
+        colors=colors,
+        pos=legend_position,
+        center_value=center_value,
+        width=legend_width,
+        height=legend_height,
+        bottom=legend_bottom,
+        label=legend_label,
+    )
 
     return Image.fromarray(im_arr)
 
 
-
-
-def visualize_gseapy(gsea_res, colors,
-                     pathway_name=None, pathway_id=None,
-                     org="hsa",
-                     column_name="graphics_name",
-                     false_color="#707070"):
+def visualize_gseapy(
+    gsea_res,
+    colors,
+    pathway_name=None,
+    pathway_id=None,
+    org="hsa",
+    column_name="graphics_name",
+    false_color="#707070",
+):
     if not isinstance(gsea_res, list):
         gsea_res = [gsea_res]
     if not isinstance(colors, list):
         colors = [colors]
     if len(gsea_res) != len(colors):
         return
-    
+
     ## Determine pathway name if not specified
     if pathway_name is None:
         if len(gsea_res) == 1:
-            pathway_name = gsea_res[0].res2d.iloc[0,"Term"]
+            pathway_name = gsea_res[0].res2d.iloc[0, "Term"]
         else:
             pathway_names = []
             for res in gsea_res:
@@ -723,27 +795,33 @@ def visualize_gseapy(gsea_res, colors,
                 return
             first_res = gsea_res[0][gsea_res[0].Term.isin(list(all_intersection))]
             pathway_name = first_res.sort_values(by="P-value").Term.tolist()[0]
-    
+
     ## [TODO] Fetch pathway ID given Term
     ## Still we need to specify organism name
     if pathway_id is None:
         pathway_id = pathway_name_to_id_dict(list_id=org)[pathway_name]
-    
+
     graph = pykegg.KGML_graph(pid=pathway_id)
     nodes = graph.get_nodes()
     for node in nodes[column_name]:
         for e, res in enumerate(gsea_res):
-            genes = res.res2d[res.res2d.Term==pathway_name].Genes.tolist()[0].split(";")
-            nodes = append_colors(nodes, genes, new_column_name="color"+str(e),
-                                  candidate_column=column_name,
-                                  true_color=colors[e],
-                                 false_color=false_color)
-    
+            genes = (
+                res.res2d[res.res2d.Term == pathway_name].Genes.tolist()[0].split(";")
+            )
+            nodes = append_colors(
+                nodes,
+                genes,
+                new_column_name="color" + str(e),
+                candidate_column=column_name,
+                true_color=colors[e],
+                false_color=false_color,
+            )
+
     col_col = [i for i in nodes.columns if i.startswith("color")]
-    qc = list()
-    for id in nodes.id:
-        tmp = nodes[nodes.id==id].loc[:, col_col]
-        tmp_colors = tmp.iloc[0,:].tolist()
+    qc = []
+    for node_id in nodes.id:
+        tmp = nodes[nodes.id == node_id].loc[:, col_col]
+        tmp_colors = tmp.iloc[0, :].tolist()
         qc.append(tmp_colors)
     nodes["color"] = qc
     kegg_map = pykegg.overlay_opencv_image(nodes, pid=pathway_id)
@@ -751,26 +829,22 @@ def visualize_gseapy(gsea_res, colors,
 
 
 def pathway_name_to_id_dict(list_id="hsa"):
-    response = requests.get("https://rest.kegg.jp/list/pathway/"+list_id)
+    response = requests.get("https://rest.kegg.jp/list/pathway/" + list_id)
     check_cache(response)
-    df = pd.read_csv(StringIO(
-        response.content.decode("utf-8")
-    ), sep="\t", header=None)
+    df = pd.read_csv(StringIO(response.content.decode("utf-8")), sep="\t", header=None)
     df.index = df[1].apply(lambda x: x.split(" - ")[0])
     return df[0].to_dict()
 
 
 def id_to_name_dict(list_id="hsa", column=3, semicolon=True, comma=True):
-    response = requests.get("https://rest.kegg.jp/list/"+list_id)
+    response = requests.get("https://rest.kegg.jp/list/" + list_id)
     check_cache(response)
 
-    df = pd.read_csv(StringIO(
-        response.content.decode("utf-8")
-    ), sep="\t", header=None)
+    df = pd.read_csv(StringIO(response.content.decode("utf-8")), sep="\t", header=None)
     if semicolon:
-        semicolon_df = df[3].apply(lambda x: x.split(";")[0])
+        semicolon_df = df[column].apply(lambda x: x.split(";")[0])
     else:
-        semicolon_df = df[3]
+        semicolon_df = df[column]
     if comma:
         comma_df = semicolon_df.apply(lambda x: x.split(",")[0])
     else:
@@ -781,4 +855,6 @@ def id_to_name_dict(list_id="hsa", column=3, semicolon=True, comma=True):
 
 def check_cache(response):
     if not response.from_cache:
-        warnings.warn("If it is not the first time fetching, please use requests_cache for caching")
+        warnings.warn(
+            "If it is not the first time fetching, please use requests_cache for caching"
+        )
