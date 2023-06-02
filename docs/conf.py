@@ -20,7 +20,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
+    # 'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
 ]
 
