@@ -288,40 +288,6 @@ def plot_kegg_global_map_plotnine(graph, hide_map=True):
     )
     return plt
 
-
-def color_grad(
-    low=-2, high=2, seq=0.01, low_col="#ffffff", high_col="#ff0000", round_num=2
-):
-    """Generate color gradient.
-
-    Parameters:
-    -----------
-    low: float
-        the lowest value.
-    high: float
-        the highest value.
-    seq: float
-        the sequence of the values.
-    low_col: str
-        the lowest color in HEX.
-    high_col: str
-        the highest color in HEX.
-    round_num: int
-        the number of digits to round.
-    """
-    minmax = np.arange(low, high, seq)
-    num_seq = len(minmax)
-    conv = {}
-    for num in range(num_seq):
-        rounded = np.round(minmax[num], round_num)
-        color1 = np.array(mpl.colors.to_rgb(low_col))
-        color2 = np.array(mpl.colors.to_rgb(high_col))
-        conv[rounded] = mpl.colors.to_hex(
-            (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
-        )
-    return conv
-
-
 def hex2rgb(hex_str):
     """Convert hex string to rgb tuple.
 
