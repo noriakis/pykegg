@@ -385,8 +385,12 @@ def append_legend(
     pos="topright",
     label="Label",
 ):
-    """
-    image: array
+    """Add specified legent to image array
+
+
+    Parameters:
+    -----------
+    image: numpy array
     pos: str
     """
     canvas = np.zeros([image.shape[0], image.shape[1], 3], dtype="uint8")
@@ -546,42 +550,6 @@ def deseq2_raw_map(
         )
 
     return Image.fromarray(im_arr)
-
-
-def color_grad2(
-    low=-2,
-    mid=0,
-    high=2,
-    seq=0.01,
-    low_col="#00ffff",
-    mid_col="#ffffff",
-    high_col="#ff0000",
-    round_num=2,
-):
-    """Obtain the color gradients based on low, mid, high values"""
-
-    low_mid = np.arange(low, mid + seq, seq)
-    mid_high = np.arange(mid, high + seq, seq)
-
-    num_seq = len(low_mid)
-    conv = {}
-    for num in range(num_seq):
-        rounded = np.round(low_mid[num], round_num)
-        color1 = np.array(mpl.colors.to_rgb(low_col))
-        color2 = np.array(mpl.colors.to_rgb(mid_col))
-        conv[rounded] = mpl.colors.to_hex(
-            (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
-        )
-    num_seq = len(mid_high)
-    for num in range(num_seq):
-        rounded = np.round(mid_high[num], round_num)
-        color1 = np.array(mpl.colors.to_rgb(mid_col))
-        color2 = np.array(mpl.colors.to_rgb(high_col))
-        conv[rounded] = mpl.colors.to_hex(
-            (1 - (num + 1) / num_seq) * color1 + (num + 1) / num_seq * color2
-        )
-    return conv
-
 
 def append_colors(
     node_df,
