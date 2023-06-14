@@ -150,7 +150,9 @@ def overlay(rects, kegg_map):
     Parameters:
     -----------
     rects: np.array
+        Image numpy array
     kegg_map: np.array
+        Image numpy array
     """
     rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
     rects = Image.fromarray(rects).convert("RGBA")
@@ -310,6 +312,29 @@ def return_color_bar(
     colors=None,
     label="Label",
 ):
+    """Return color bar as a numpy array.
+    
+    Parameters:
+    -----------
+    width: int
+        width of the color bar.
+    height: int
+        height of the color bar.
+    bottom: int
+        bottom of the color bar.
+    min_value: int
+        minimum value of the color bar.
+    max_value: int
+        maximum value of the color bar.
+    two_slope: bool
+        if True, use two slope norm.
+    center_value: int
+        center value of the color bar.
+    colors: list
+        list of colors.
+    label: str
+        label of the color bar.
+    """
     mpl.use("Agg")
     fig, ax = plt.subplots(figsize=(width, height))
     fig.subplots_adjust(bottom=bottom)
@@ -333,7 +358,8 @@ def return_color_bar(
     fig.canvas.draw()
     data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    #     with_alpha = np.dstack((data, 255*np.ones((legend.shape[0], legend.shape[1]), dtype=np.uint8)))
+    #     with_alpha = np.dstack((data,
+    # 255*np.ones((legend.shape[0], legend.shape[1]), dtype=np.uint8)))
     mpl.pyplot.close()
     return data
 
@@ -353,11 +379,30 @@ def append_legend(
 ):
     """Add specified legent to image array
 
-
     Parameters:
     -----------
     image: numpy array
+        Image numpy array
+    min_value: float
+        Minimum value of the color bar
+    max_value: float
+        Maximum value of the color bar
+    center_value: float
+        Center value of the color bar
+    two_slope: bool
+        If True, use two slope color bar
+    colors: list
+        List of colors, if None, use blue-white-red color bar
+    width: float
+        Width of the color bar
+    height: float
+        Height of the color bar
+    bottom: float
+        Bottom position of the color bar
     pos: str
+        Position specification, "topright", "bottomright", "bottomleft", "topleft"
+    label: str
+        Label of the color bar
     """
     canvas = np.zeros([image.shape[0], image.shape[1], 3], dtype="uint8")
     canvas.fill(255)
@@ -430,6 +475,47 @@ def deseq2_raw_map(
     legend_height=0.6,
     legend_bottom=0.8,
 ):
+    """ Plot PyDESeq2 results on KEGG pathway map
+
+    Parameters:
+    -----------
+    results_df: pandas.DataFrame
+        PyDESeq2 results dataframe
+    path: str
+        Path to the KEGG pathway map
+    pid: str
+        KEGG pathway ID
+    node_name_column: str
+        Column name of the node name
+    delim: str
+        Delimiter of the node name
+    color_column: str
+        Column name of the color
+    highlight_sig: bool
+        If True, highlight significant genes
+    highlight_color: str
+        Color of the highlight
+    highlight_padj_thresh: float
+        P-value threshold for the highlight
+    colors: list
+        List of colors, if None, use blue-white-red color bar
+    two_slope: bool
+        If True, use two slope color bar
+    center_value: float
+        Center value of the color bar
+    show_legend: bool
+        If True, show legend
+    legend_label: str
+        Label of the legend
+    legend_position: str
+        Position of the legend
+    legend_width: float
+        Width of the legend
+    legend_height: float
+        Height of the legend
+    legend_bottom: float
+        Bottom position of the legend
+    """
     if ~highlight_sig:
         highlight_column = None
 
@@ -570,6 +656,28 @@ def append_colors_continuous_values(
     two_slope=True,
     center_value="median",
 ):
+    """Append continuous colors to the node_df based on the values in dict.
+
+    Parameters:
+    -----------
+    node_df: DataFrame
+        node data obtained by `get_nodes()`.
+    lfc_dict: dict
+        dict of values.
+    node_name_column: str
+        the column in `node_df` specifying node IDs.
+    new_color_column: str
+        the name of the new column.
+    delim: str
+        the delimiter of the node IDs. Typically "," for graphics_name,
+        and " " for name.
+    colors: list
+        the colors to be used. Default is ["#0000ff", "#ffffff", "#ff0000"].
+    two_slope: bool
+        whether to use two-slope color scheme. Default is True.
+    center_value: str or float
+        the center value of the color scheme. Default is "median".
+    """
     node_value = []
     for node in node_df[node_name_column]:
         in_node = [i.replace("...", "") for i in node.split(delim)]
@@ -709,6 +817,25 @@ def visualize_gseapy(
     column_name="graphics_name",
     false_color="#707070",
 ):
+    """Visualize GSEApy results.
+
+    Parameters:
+    -----------
+    gsea_res: GSEApy object or list of GSEApy objects
+        GSEApy results.
+    colors: str or list of str
+        Colors to use for each gsea results.
+    pathway_name: str
+        Pathway name.
+    pathway_id: str
+        Pathway ID.
+    org: str
+        Organism.
+    column_name: str
+        Column name to use for visualization.
+    false_color: str
+        Color to use for false nodes.
+    """
     if not isinstance(gsea_res, list):
         gsea_res = [gsea_res]
     if not isinstance(colors, list):
@@ -763,6 +890,13 @@ def visualize_gseapy(
 
 
 def pathway_name_to_id_dict(list_id="hsa"):
+    """Get pathway name to ID dictionary.
+
+    Parameters:
+    -----------
+    list_id: str
+        organism ID.
+    """
     response = requests.get("https://rest.kegg.jp/list/pathway/" + list_id)
     check_cache(response)
     df = pd.read_csv(StringIO(response.content.decode("utf-8")), sep="\t", header=None)
@@ -771,6 +905,19 @@ def pathway_name_to_id_dict(list_id="hsa"):
 
 
 def id_to_name_dict(list_id="hsa", column=3, semicolon=True, comma=True):
+    """Get KEGG ID to name dictionary.
+
+    Parameters:
+    -----------
+    list_id: str
+        organism ID.
+    column: int
+        Column to use for name.
+    semicolon: bool
+        Whether to split by semicolon.
+    comma: bool
+        Whether to split by comma.
+    """
     response = requests.get("https://rest.kegg.jp/list/" + list_id)
     check_cache(response)
 
@@ -788,6 +935,13 @@ def id_to_name_dict(list_id="hsa", column=3, semicolon=True, comma=True):
 
 
 def check_cache(response):
+    """Check if response is from cache.
+
+    Parameters:
+    -----------
+    response: requests.Response
+        Response object.
+    """
     if not response.from_cache:
         warnings.warn(
             "If it is not the first time fetching, please use requests_cache for caching"
