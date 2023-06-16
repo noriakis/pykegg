@@ -1044,8 +1044,7 @@ def convert_id(x, c_dic, first_only=True):
 
 
 def parallel_edges(df, move_param=5):
-    """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine
-    based on whether the y position is the same between two points
+    """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine based on whether the y position is the same between two points
     
     Parameters
     ----------
@@ -1089,8 +1088,7 @@ def parallel_edges(df, move_param=5):
     return seg_df
 
 def parallel_edges2(df, move_param=5):
-    """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine
-    based on degrees between points
+    """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine based on degrees between points
     
     Parameters
     ----------

@@ -14,6 +14,10 @@ KEGG information (especially KGML) can be parsed effortlessly by the great packa
 * Visualize the KEGG information by libraries like ``OpenCV`` or ``plotnine`` in easily customizable ways, using grammer of graphics.
 
 
+Analysis
+--------
+Please see :ref:`notebooks <notebooks>` for the visualization example and the example analyses using ``PyDESeq2``, ``scanpy``, and ``GSEApy``.
+
 
 .. note::
 

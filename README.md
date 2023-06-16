@@ -19,8 +19,14 @@ print(gra)
 
 ## Overlay to raw image
 nds = g.get_nodes()
+nds = nds[nds.original_type=="gene"]
 nds["lfc"] = np.arange(-2,2,0.01)[0:nds.shape[0]]
-nds["color"] = nds.lfc.apply(lambda x: round(x,3)).replace(pykegg.color_grad(minimum=min(nds.lfc), maximum=max(nds.lfc),seq=0.01))
+cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", ["yellow","green"])
+norm = mpl.colors.Normalize(vmin=min(nds.lfc), vmax=max(nds.lfc))
+nds["color"] = [
+        mpl.colors.to_hex(cmap_grad(norm(x))) if x is not None else None
+        for x in nds.lfc
+    ]
 Image.fromarray(pykegg.overlay_opencv_image(nds, pid="hsa03460"))
 
 ## Plot using plotnine
