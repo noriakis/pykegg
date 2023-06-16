@@ -1,6 +1,7 @@
 import re
 import os
 import warnings
+import math
 from io import StringIO
 
 import requests
@@ -161,6 +162,38 @@ def overlay(rects, kegg_map):
     result_image = Image.alpha_composite(rects, kegg_map)
     return cv2.cvtColor(np.asarray(result_image), cv2.COLOR_RGBA2BGRA)
 
+
+def return_segments(
+        graph
+    ):
+    """Return edge dataframe to having xend and yend
+    
+    Parameters:
+    -----------
+    graph: KGML_graph
+        KGML_graph class object
+    """
+    node_df = graph.get_nodes()
+    edge_df = graph.get_edges()
+
+    seg_df = pd.concat(
+        [
+            node_df.reset_index()
+            .set_index("id")
+            .loc[edge_df.entry1]
+            .reset_index()
+            .loc[:, ["x", "y"]],
+            node_df.reset_index()
+            .set_index("id")
+            .loc[edge_df.entry2]
+            .reset_index()
+            .loc[:, ["x", "y"]],
+        ],
+        axis=1,
+    )
+    seg_df.columns = ["x", "y", "xend", "yend"]
+    seg_df = pd.concat([seg_df, edge_df], axis=1)
+    return seg_df
 
 def plot_kegg_pathway_plotnine(
     graph,
@@ -946,3 +979,65 @@ def check_cache(response):
         warnings.warn(
             "If it is not the first time fetching, please use requests_cache for caching"
         )
+
+
+def shorten_end(row, pct=0.8):
+    """shorten segments by moving yend and xend
+    
+    
+    Parameters:
+    -----------
+    row: pd.Series
+        Series of edge data frame
+    pct: float
+        scaling factor
+    
+    """
+    radians = math.atan2(row["yend"]-row["y"],
+                         row["xend"]-row["x"])
+    dists = math.dist([row["x"], row["y"]],
+                     [row["xend"], row["yend"]])
+    short = dists * pct
+    
+    new_xend = row["x"] + short * math.cos(radians)    
+    new_yend = row["y"] + short * math.sin(radians)
+    
+    row["xend"] = new_xend
+    row["yend"] = new_yend
+
+    return row
+
+
+def convert_id(x, c_dic, first_only=True):
+    """convert ID based on dict
+    
+    Parameters:
+    -----------
+    x: str
+        node name
+    c_dic: dict
+        dictionary obtained typically obtained by `id_to_name_dict`
+        keys correspond to KEGG ID and values correspond to name
+    first_only:
+        return only first string separated by space  
+    
+    """
+    
+    in_node = x.split(" ")
+    if first_only:
+        if in_node[0] in c_dic.keys():
+            converted = c_dic[in_node[0]]
+        else:
+            converted = np.nan
+    else:
+        tmp_node = []
+        for node in in_node:
+            if node in c_dic.keys():
+                tmp_node.append(c_dic[node])
+            else:
+                pass
+        if (len(tmp_node)!=0):
+            converted = " ".join(tmp_node)
+        else:
+            converted = np.nan
+    return converted
