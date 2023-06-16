@@ -377,7 +377,7 @@ def append_legend(
     pos="topright",
     label="Label",
 ):
-    """Add specified legent to image array
+    """Add specified legend to image array
 
     Parameters:
     -----------
@@ -830,7 +830,7 @@ def visualize_gseapy(
     pathway_id: str
         Pathway ID.
     org: str
-        Organism.
+        KEGG organism ID.
     column_name: str
         Column name to use for visualization.
     false_color: str
