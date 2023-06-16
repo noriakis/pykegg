@@ -1041,3 +1041,94 @@ def convert_id(x, c_dic, first_only=True):
         else:
             converted = np.nan
     return converted
+
+
+def parallel_edges(df, move_param=5):
+    """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine
+    based on whether the y position is the same between two points
+    
+    Parameters
+    ----------
+    df: pd.DataFrame
+        data frame returned by `return_segments`
+    move_params: float or int
+        parameter to control edge nudge
+    """
+    ## Identify multiple edges
+    df_dup = df[df.subtypes.apply(lambda x: len(x))>1]
+    df_dup_collapse = []
+    new_col = df_dup.columns
+    for row in df_dup.index:
+        tmp_group = df_dup.loc[row, :]
+        for i in tmp_group["subtypes"]:
+            tmp_group_rep = tmp_group.copy()
+            tmp_group_rep["subtypes"] = [i]
+            df_dup_collapse.append(tmp_group_rep)
+    df_dup_collapse = pd.concat(df_dup_collapse, axis=1).T
+    df_nodup = df[df.subtypes.apply(lambda x: len(x))==1]
+        
+    df_dup_re = []
+    for group in df_dup_collapse.groupby(["entry1","entry2"]):
+        tmp_group = group[1]
+        radians = math.atan2(tmp_group["yend"]-tmp_group["y"],
+                         tmp_group["xend"]-tmp_group["x"])
+        nudge = np.linspace(-1 * move_param,
+                            move_param,
+                            tmp_group.shape[0])
+        if tmp_group.y.unique()[0]==tmp_group.yend.unique()[0]:
+            tmp_group["y"] = tmp_group["y"] + nudge
+            tmp_group["yend"] = tmp_group["yend"] + nudge
+        else:
+            tmp_group["x"] = tmp_group["x"] + nudge
+            tmp_group["xend"] = tmp_group["xend"] + nudge
+        df_dup_re.append(tmp_group)
+    seg_df = pd.concat([df_nodup, pd.concat(df_dup_re)])
+    for change in ["xend","x","yend","y"]:
+        seg_df[change] = seg_df[change].apply(lambda x: float(x))
+    
+    return seg_df
+
+def parallel_edges2(df, move_param=5):
+    """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine
+    based on degrees between points
+    
+    Parameters
+    ----------
+    df: pd.DataFrame
+        data frame returned by `return_segments`
+    move_params: float or int
+        parameter to control edge nudge
+    """
+    ## Identify multiple edges
+    df_dup = df[df.subtypes.apply(lambda x: len(x))>1]
+    df_dup_collapse = []
+    new_col = df_dup.columns
+    for row in df_dup.index:
+        tmp_group = df_dup.loc[row, :]
+        for i in tmp_group["subtypes"]:
+            tmp_group_rep = tmp_group.copy()
+            tmp_group_rep["subtypes"] = [i]
+            df_dup_collapse.append(tmp_group_rep)
+    df_dup_collapse = pd.concat(df_dup_collapse, axis=1).T
+    df_nodup = df[df.subtypes.apply(lambda x: len(x))==1]
+        
+    df_dup_re = []
+    for group in df_dup_collapse.groupby(["entry1","entry2"]):
+        tmp_group = group[1]
+        abs_deg = abs(math.degrees(math.atan2(tmp_group.yend.unique()-tmp_group.y.unique(),
+                         tmp_group.xend.unique()-tmp_group.x.unique())))
+        nudge = np.linspace(-1 * move_param,
+                            move_param,
+                            tmp_group.shape[0])
+        if abs_deg < 45:
+            tmp_group["y"] = tmp_group["y"] + nudge
+            tmp_group["yend"] = tmp_group["yend"] + nudge
+        else:
+            tmp_group["x"] = tmp_group["x"] + nudge
+            tmp_group["xend"] = tmp_group["xend"] + nudge
+        df_dup_re.append(tmp_group)
+    seg_df = pd.concat([df_nodup, pd.concat(df_dup_re)])
+    for change in ["xend","x","yend","y"]:
+        seg_df[change] = seg_df[change].apply(lambda x: float(x))
+    
+    return seg_df
