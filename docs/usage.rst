@@ -10,4 +10,4 @@ To use pykegg, first install it using pip:
 
 .. code-block:: console
 
-   pip install -i https://test.pypi.org/simple/ pykegg
+   pip install pykegg
