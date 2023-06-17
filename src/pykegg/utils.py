@@ -163,11 +163,9 @@ def overlay(rects, kegg_map):
     return cv2.cvtColor(np.asarray(result_image), cv2.COLOR_RGBA2BGRA)
 
 
-def return_segments(
-        graph
-    ):
+def return_segments(graph):
     """Return edge dataframe to having xend and yend
-    
+
     Parameters:
     -----------
     graph: KGML_graph
@@ -194,6 +192,7 @@ def return_segments(
     seg_df.columns = ["x", "y", "xend", "yend"]
     seg_df = pd.concat([seg_df, edge_df], axis=1)
     return seg_df
+
 
 def plot_kegg_pathway_plotnine(
     graph,
@@ -323,6 +322,7 @@ def plot_kegg_global_map_plotnine(graph, hide_map=True):
     )
     return plt
 
+
 def hex2rgb(hex_str):
     """Convert hex string to rgb tuple.
 
@@ -346,7 +346,7 @@ def return_color_bar(
     label="Label",
 ):
     """Return color bar as a numpy array.
-    
+
     Parameters:
     -----------
     width: int
@@ -508,7 +508,7 @@ def deseq2_raw_map(
     legend_height=0.6,
     legend_bottom=0.8,
 ):
-    """ Plot PyDESeq2 results on KEGG pathway map
+    """Plot PyDESeq2 results on KEGG pathway map
 
     Parameters:
     -----------
@@ -635,6 +635,7 @@ def deseq2_raw_map(
         )
 
     return Image.fromarray(im_arr)
+
 
 def append_colors(
     node_df,
@@ -983,25 +984,23 @@ def check_cache(response):
 
 def shorten_end(row, pct=0.8):
     """shorten segments by moving yend and xend
-    
-    
+
+
     Parameters:
     -----------
     row: pd.Series
         Series of edge data frame
     pct: float
         scaling factor
-    
+
     """
-    radians = math.atan2(row["yend"]-row["y"],
-                         row["xend"]-row["x"])
-    dists = math.dist([row["x"], row["y"]],
-                     [row["xend"], row["yend"]])
+    radians = math.atan2(row["yend"] - row["y"], row["xend"] - row["x"])
+    dists = math.dist([row["x"], row["y"]], [row["xend"], row["yend"]])
     short = dists * pct
-    
-    new_xend = row["x"] + short * math.cos(radians)    
+
+    new_xend = row["x"] + short * math.cos(radians)
     new_yend = row["y"] + short * math.sin(radians)
-    
+
     row["xend"] = new_xend
     row["yend"] = new_yend
 
@@ -1010,7 +1009,7 @@ def shorten_end(row, pct=0.8):
 
 def convert_id(x, c_dic, first_only=True):
     """convert ID based on dict
-    
+
     Parameters:
     -----------
     x: str
@@ -1019,10 +1018,10 @@ def convert_id(x, c_dic, first_only=True):
         dictionary obtained typically obtained by `id_to_name_dict`
         keys correspond to KEGG ID and values correspond to name
     first_only:
-        return only first string separated by space  
-    
+        return only first string separated by space
+
     """
-    
+
     in_node = x.split(" ")
     if first_only:
         if in_node[0] in c_dic.keys():
@@ -1036,7 +1035,7 @@ def convert_id(x, c_dic, first_only=True):
                 tmp_node.append(c_dic[node])
             else:
                 pass
-        if (len(tmp_node)!=0):
+        if len(tmp_node) != 0:
             converted = " ".join(tmp_node)
         else:
             converted = np.nan
@@ -1045,7 +1044,7 @@ def convert_id(x, c_dic, first_only=True):
 
 def parallel_edges(df, move_param=5):
     """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine based on whether the y position is the same between two points
-    
+
     Parameters
     ----------
     df: pd.DataFrame
@@ -1054,7 +1053,7 @@ def parallel_edges(df, move_param=5):
         parameter to control edge nudge
     """
     ## Identify multiple edges
-    df_dup = df[df.subtypes.apply(lambda x: len(x))>1]
+    df_dup = df[df.subtypes.apply(lambda x: len(x)) > 1]
     df_dup_collapse = []
     new_col = df_dup.columns
     for row in df_dup.index:
@@ -1064,17 +1063,16 @@ def parallel_edges(df, move_param=5):
             tmp_group_rep["subtypes"] = [i]
             df_dup_collapse.append(tmp_group_rep)
     df_dup_collapse = pd.concat(df_dup_collapse, axis=1).T
-    df_nodup = df[df.subtypes.apply(lambda x: len(x))==1]
-        
+    df_nodup = df[df.subtypes.apply(lambda x: len(x)) == 1]
+
     df_dup_re = []
-    for group in df_dup_collapse.groupby(["entry1","entry2"]):
+    for group in df_dup_collapse.groupby(["entry1", "entry2"]):
         tmp_group = group[1]
-        radians = math.atan2(tmp_group["yend"]-tmp_group["y"],
-                         tmp_group["xend"]-tmp_group["x"])
-        nudge = np.linspace(-1 * move_param,
-                            move_param,
-                            tmp_group.shape[0])
-        if tmp_group.y.unique()[0]==tmp_group.yend.unique()[0]:
+        radians = math.atan2(
+            tmp_group["yend"] - tmp_group["y"], tmp_group["xend"] - tmp_group["x"]
+        )
+        nudge = np.linspace(-1 * move_param, move_param, tmp_group.shape[0])
+        if tmp_group.y.unique()[0] == tmp_group.yend.unique()[0]:
             tmp_group["y"] = tmp_group["y"] + nudge
             tmp_group["yend"] = tmp_group["yend"] + nudge
         else:
@@ -1082,14 +1080,15 @@ def parallel_edges(df, move_param=5):
             tmp_group["xend"] = tmp_group["xend"] + nudge
         df_dup_re.append(tmp_group)
     seg_df = pd.concat([df_nodup, pd.concat(df_dup_re)])
-    for change in ["xend","x","yend","y"]:
+    for change in ["xend", "x", "yend", "y"]:
         seg_df[change] = seg_df[change].apply(lambda x: float(x))
-    
+
     return seg_df
+
 
 def parallel_edges2(df, move_param=5):
     """Experimental function moving x and y positions if multiple edges are to be plotted in plotnine based on degrees between points
-    
+
     Parameters
     ----------
     df: pd.DataFrame
@@ -1098,7 +1097,7 @@ def parallel_edges2(df, move_param=5):
         parameter to control edge nudge
     """
     ## Identify multiple edges
-    df_dup = df[df.subtypes.apply(lambda x: len(x))>1]
+    df_dup = df[df.subtypes.apply(lambda x: len(x)) > 1]
     df_dup_collapse = []
     new_col = df_dup.columns
     for row in df_dup.index:
@@ -1108,16 +1107,20 @@ def parallel_edges2(df, move_param=5):
             tmp_group_rep["subtypes"] = [i]
             df_dup_collapse.append(tmp_group_rep)
     df_dup_collapse = pd.concat(df_dup_collapse, axis=1).T
-    df_nodup = df[df.subtypes.apply(lambda x: len(x))==1]
-        
+    df_nodup = df[df.subtypes.apply(lambda x: len(x)) == 1]
+
     df_dup_re = []
-    for group in df_dup_collapse.groupby(["entry1","entry2"]):
+    for group in df_dup_collapse.groupby(["entry1", "entry2"]):
         tmp_group = group[1]
-        abs_deg = abs(math.degrees(math.atan2(tmp_group.yend.unique()-tmp_group.y.unique(),
-                         tmp_group.xend.unique()-tmp_group.x.unique())))
-        nudge = np.linspace(-1 * move_param,
-                            move_param,
-                            tmp_group.shape[0])
+        abs_deg = abs(
+            math.degrees(
+                math.atan2(
+                    tmp_group.yend.unique() - tmp_group.y.unique(),
+                    tmp_group.xend.unique() - tmp_group.x.unique(),
+                )
+            )
+        )
+        nudge = np.linspace(-1 * move_param, move_param, tmp_group.shape[0])
         if abs_deg < 45:
             tmp_group["y"] = tmp_group["y"] + nudge
             tmp_group["yend"] = tmp_group["yend"] + nudge
@@ -1126,7 +1129,7 @@ def parallel_edges2(df, move_param=5):
             tmp_group["xend"] = tmp_group["xend"] + nudge
         df_dup_re.append(tmp_group)
     seg_df = pd.concat([df_nodup, pd.concat(df_dup_re)])
-    for change in ["xend","x","yend","y"]:
+    for change in ["xend", "x", "yend", "y"]:
         seg_df[change] = seg_df[change].apply(lambda x: float(x))
-    
+
     return seg_df
