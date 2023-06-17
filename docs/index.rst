@@ -13,6 +13,7 @@ KEGG information (especially KGML) can be parsed effortlessly by the great packa
 * Combine with the other omics analysis libraries like ``scanpy``, ``PyDESeq2``.
 * Visualize the KEGG information by libraries like ``OpenCV`` or ``plotnine`` in easily customizable ways, using grammer of graphics.
 
+For R environment, please refer to `ggkegg <https://noriakis.github.io/software/ggkegg>`_.
 
 Analysis
 --------
