@@ -163,7 +163,7 @@ def overlay(rects, kegg_map):
     return cv2.cvtColor(np.asarray(result_image), cv2.COLOR_RGBA2BGRA)
 
 
-def return_segments(graph):
+def return_segments(graph, node_df=None):
     """Return edge dataframe to having xend and yend
 
     Parameters:
@@ -171,7 +171,8 @@ def return_segments(graph):
     graph: KGML_graph
         KGML_graph class object
     """
-    node_df = graph.get_nodes()
+    if node_df is None:
+        node_df = graph.get_nodes()
     edge_df = graph.get_edges()
 
     seg_df = pd.concat(
