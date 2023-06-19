@@ -175,6 +175,10 @@ def return_segments(graph, node_df=None):
         node_df = graph.get_nodes()
     edge_df = graph.get_edges()
 
+    ## Subset to nodes
+    in_nodes = node_df.id.tolist()
+    edge_df = edge_df[edge_df.apply(lambda x: x.entry1 in in_nodes and x.entry2 in in_nodes, axis=1)]
+
     seg_df = pd.concat(
         [
             node_df.reset_index()
@@ -1070,7 +1074,8 @@ def parallel_edges(df, move_param=5):
     for group in df_dup_collapse.groupby(["entry1", "entry2"]):
         tmp_group = group[1]
         radians = math.atan2(
-            tmp_group["yend"] - tmp_group["y"], tmp_group["xend"] - tmp_group["x"]
+            tmp_group.yend.unique() - tmp_group.y.unique(),
+            tmp_group.xend.unique() - tmp_group.x.unique()
         )
         nudge = np.linspace(-1 * move_param, move_param, tmp_group.shape[0])
         if tmp_group.y.unique()[0] == tmp_group.yend.unique()[0]:

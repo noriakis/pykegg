@@ -63,6 +63,7 @@ class KGML_graph:
     def get_edges(self):
         """Get edges DataFrame of the KGML graph."""
 
+        ## [TODO] Add edges indicating `in_group`
         rel_list = [
             [
                 relation.entry1.id,
