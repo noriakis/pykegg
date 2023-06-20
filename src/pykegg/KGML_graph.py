@@ -27,7 +27,7 @@ class KGML_graph:
                 path_cont = requests.get("https://rest.kegg.jp/get/" + pid + "/kgml")
                 self.pathway = read(path_cont.content.decode())
 
-    def get_graph(self, layout="native"):
+    def get_graph(self, layout="native", add_group=False):
         """Get igraph object of the KGML graph.
 
         Parameters:
@@ -35,7 +35,7 @@ class KGML_graph:
         layout : str
             layout of the graph. If `native`, the original layout of the KGML file is used.
         """
-        edge_df = self.get_edges()
+        edge_df = self.get_edges(add_group=add_group)
         node_df = self.get_nodes()
 
         node_df["orig_id"] = node_df.id
