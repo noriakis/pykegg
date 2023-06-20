@@ -163,17 +163,22 @@ def overlay(rects, kegg_map):
     return cv2.cvtColor(np.asarray(result_image), cv2.COLOR_RGBA2BGRA)
 
 
-def return_segments(graph, node_df=None):
+def return_segments(graph, node_df=None, edge_df=None):
     """Return edge dataframe to having xend and yend
 
     Parameters:
     -----------
     graph: KGML_graph
         KGML_graph class object
+    node_df: DataFrame
+        node data obtained by `get_nodes()`.
+    edge_df: DataFrame
+        edge data obtained by `get_edges()`.
     """
     if node_df is None:
         node_df = graph.get_nodes()
-    edge_df = graph.get_edges()
+    if edge_df is None:
+        edge_df = graph.get_edges()
 
     ## Subset to nodes
     in_nodes = node_df.id.tolist()
@@ -987,7 +992,7 @@ def check_cache(response):
         )
 
 
-def shorten_end(row, pct=0.8):
+def shorten_end(row, pct=0.8, absolute=None):
     """shorten segments by moving yend and xend
 
 
@@ -997,11 +1002,15 @@ def shorten_end(row, pct=0.8):
         Series of edge data frame
     pct: float
         scaling factor
-
+    absolute: float
+        absolute distance to shorten
     """
     radians = math.atan2(row["yend"] - row["y"], row["xend"] - row["x"])
     dists = math.dist([row["x"], row["y"]], [row["xend"], row["yend"]])
-    short = dists * pct
+    if absolute is None:
+        short = dists * pct
+    else:
+        short = dists - absolute
 
     new_xend = row["x"] + short * math.cos(radians)
     new_yend = row["y"] + short * math.sin(radians)

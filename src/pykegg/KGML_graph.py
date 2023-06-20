@@ -60,7 +60,7 @@ class KGML_graph:
             graph.vs["y"] = layout.y
         return graph
 
-    def get_edges(self):
+    def get_edges(self, add_group=False):
         """Get edges DataFrame of the KGML graph."""
 
         ## [TODO] Add edges indicating `in_group`
@@ -88,12 +88,25 @@ class KGML_graph:
 
         edges = pd.DataFrame(rel_list)
         edges = pd.concat([edges, reacs])
-        edges.index = np.arange(0, edges.shape[0], 1)
 
         if edges.shape[0] == 0:
             return None
         edges.columns = ["entry1", "entry2", "type", "subtypes", "reaction"]
 
+        if add_group:
+            group_df = []
+            groups = [j for j in [self.pathway.entries[i] for i in self.pathway.entries] if j.type=="group"]
+            if len(groups)==0:
+                return edges
+            for tmp_group in groups:
+                for component in [i.id for i in tmp_group.components]:
+                    group_df.append([tmp_group.id, component, "in_group", "in_group", None])
+            group_df = pd.DataFrame(group_df)
+            group_df.columns = ["entry1", "entry2", "type", "subtypes", "reaction"]
+
+            edges = pd.concat([edges, group_df])
+            
+        edges.index = np.arange(0, edges.shape[0], 1)
         return edges
 
     def get_nodes(self, node_x_nudge=5, node_y_nudge=5,
