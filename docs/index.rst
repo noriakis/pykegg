@@ -24,6 +24,10 @@ Please see :ref:`notebooks <notebooks>` for the visualization example and the ex
 
    This project is under active development.
 
+.. warning::
+
+    **pykegg** uses KEGG API, and is restricted to academic use by academic users belonging to academic institutions.
+
 .. toctree::
   :caption: Getting started
   :hidden:
