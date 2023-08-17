@@ -34,7 +34,8 @@ Image.fromarray(pykegg.overlay_opencv_image(nds, pid="hsa03460"))
 pykegg.plot_kegg_pathway_plotnine(g, node_x_nudge=25, label_size=5, show_label="gene")
 ```
 
-## [Documentation](https://pykegg.readthedocs.io/)
+## Documentation
+[https://pykegg.readthedocs.io/](https://pykegg.readthedocs.io/)
 
 ## TODO
 - [ ] The function for converting identifiers (especially for ENTREZID <-> SYMBOL) without connection to servers, like using [`genomic-features`](https://genomic-features.readthedocs.io/en/latest/).

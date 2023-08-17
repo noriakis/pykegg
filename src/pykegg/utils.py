@@ -34,7 +34,7 @@ def overlay_opencv_image(
     transparent_colors=None,
     highlight_nodes=None,
     highlight_color="#ff0000",
-    highlight_expand=2,
+    highlight_expand=2
 ):
     """Obtain the raw image of pathway and color the nodes.
 
@@ -654,7 +654,7 @@ def append_colors(
     candidate_column="graphics_name",
     delim=",",
     true_color="#ff0000",
-    false_color="#ffffff",
+    false_color="#ffffff"
 ):
     """Append discrete colors to the node_df based on intersection with candidate ID list.
 
@@ -852,6 +852,70 @@ def overlay_continuous_values_with_legend(
     return Image.fromarray(im_arr)
 
 
+
+def visualize(
+    pathway_name,
+    genes,
+    db=None,
+    org=None,
+    column_name="graphics_name",
+    false_color="#707070",
+    true_color="#FA8072",
+    output=None
+    ):
+    """Output pathway image based on pathway *name* and gene symbol list
+    pathway_name: str
+        pathway name (not ID)
+    genes: str
+        list of genes
+    db: str
+        database name
+    org: str
+        if not specified db, the parameter will be used to convert pathway name to ID
+    column_name: str
+        column name to match for in node data
+    true_color: str
+        HEX specifying color for matched nodes
+    false_color: str
+        HEX specifying color for not matched nodes
+    output: str
+    	output image file, default to None, meaning return the Image
+    """
+    if db is None and org is None:
+        raise ValueError("Please specify db or org")
+    
+    if "Human" in db:
+        org="hsa"
+    elif "Mouse" in db:
+        org="mmu"
+    else:
+        if org is None:
+            return
+    
+    pathway_id = pykegg.pathway_name_to_id_dict(list_id=org)[pathway_name]
+
+    graph = pykegg.KGML_graph(pid=pathway_id)
+    nodes = graph.get_nodes()
+    nodes = nodes[nodes.original_type=="gene"]
+    
+    ## Append color to node dataframe
+    nodes = append_colors(
+        nodes,
+        genes,
+        true_color=true_color,
+        false_color=false_color,
+    )
+    
+    kegg_map_image = Image.fromarray(pykegg.overlay_opencv_image(nodes, pid=pathway_id))
+    if output is not None:
+    	print(output)
+    	kegg_map_image.save(output)
+    	return
+    else:
+	    return kegg_map_image        
+
+
+
 def visualize_gseapy(
     gsea_res,
     colors,
@@ -904,7 +968,7 @@ def visualize_gseapy(
     ## [TODO] Fetch pathway ID given Term
     ## Still we need to specify organism name
     if pathway_id is None:
-        pathway_id = pathway_name_to_id_dict(list_id=org)[pathway_name]
+        pathway_id = pykegg.pathway_name_to_id_dict(list_id=org)[pathway_name]
 
     graph = pykegg.KGML_graph(pid=pathway_id)
     nodes = graph.get_nodes()
@@ -986,9 +1050,14 @@ def check_cache(response):
     response: requests.Response
         Response object.
     """
-    if not response.from_cache:
+    try:
+        if not response.from_cache:
+            warnings.warn(
+                "If it is not the first time fetching, please use requests_cache for caching"
+            )
+    except:
         warnings.warn(
-            "If it is not the first time fetching, please use requests_cache for caching"
+            "If it is not the first time fetching, please use requests_cache for caching and run install_cache()"
         )
 
 
