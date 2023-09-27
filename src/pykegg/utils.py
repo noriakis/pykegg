@@ -88,14 +88,14 @@ def overlay_opencv_image(
         dst[mask, 3] = 0
 
     for i in node_df.id:
-        tmp = node_df[node_df.id == i]
+        tmp = node_df[node_df.id == i].iloc[0,:]
         pos = (
             int(tmp["x0"]),
             int(-1 * tmp["y0"]),
             int(tmp["width"]),
             int(tmp["height"]),
         )
-        tmp_col = tmp[fill_color].tolist()[0]
+        tmp_col = tmp[fill_color]
         if tmp_col is None:
             continue
         if isinstance(tmp_col, list):
