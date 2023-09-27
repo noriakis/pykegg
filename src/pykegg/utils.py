@@ -34,7 +34,7 @@ def overlay_opencv_image(
     transparent_colors=None,
     highlight_nodes=None,
     highlight_color="#ff0000",
-    highlight_expand=2
+    highlight_expand=2,
 ):
     """Obtain the raw image of pathway and color the nodes.
 
@@ -88,7 +88,7 @@ def overlay_opencv_image(
         dst[mask, 3] = 0
 
     for i in node_df.id:
-        tmp = node_df[node_df.id == i].iloc[0,:]
+        tmp = node_df[node_df.id == i].iloc[0, :]
         pos = (
             int(tmp["x0"]),
             int(-1 * tmp["y0"]),
@@ -182,7 +182,9 @@ def return_segments(graph, node_df=None, edge_df=None):
 
     ## Subset to nodes
     in_nodes = node_df.id.tolist()
-    edge_df = edge_df[edge_df.apply(lambda x: x.entry1 in in_nodes and x.entry2 in in_nodes, axis=1)]
+    edge_df = edge_df[
+        edge_df.apply(lambda x: x.entry1 in in_nodes and x.entry2 in in_nodes, axis=1)
+    ]
 
     seg_df = pd.concat(
         [
@@ -654,7 +656,7 @@ def append_colors(
     candidate_column="graphics_name",
     delim=",",
     true_color="#ff0000",
-    false_color="#ffffff"
+    false_color="#ffffff",
 ):
     """Append discrete colors to the node_df based on intersection with candidate ID list.
 
@@ -852,7 +854,6 @@ def overlay_continuous_values_with_legend(
     return Image.fromarray(im_arr)
 
 
-
 def visualize(
     pathway_name,
     genes,
@@ -861,9 +862,12 @@ def visualize(
     column_name="graphics_name",
     false_color="#707070",
     true_color="#FA8072",
-    output=None
-    ):
+    output=None,
+):
     """Output pathway image based on pathway *name* and gene symbol list
+
+    Parameters:
+    -----------
     pathway_name: str
         pathway name (not ID)
     genes: str
@@ -879,25 +883,25 @@ def visualize(
     false_color: str
         HEX specifying color for not matched nodes
     output: str
-    	output image file, default to None, meaning return the Image
+        output image file, default to None, meaning return the Image
     """
     if db is None and org is None:
         raise ValueError("Please specify db or org")
-    
+
     if "Human" in db:
-        org="hsa"
+        org = "hsa"
     elif "Mouse" in db:
-        org="mmu"
+        org = "mmu"
     else:
         if org is None:
             return
-    
+
     pathway_id = pykegg.pathway_name_to_id_dict(list_id=org)[pathway_name]
 
     graph = pykegg.KGML_graph(pid=pathway_id)
     nodes = graph.get_nodes()
-    nodes = nodes[nodes.original_type=="gene"]
-    
+    nodes = nodes[nodes.original_type == "gene"]
+
     ## Append color to node dataframe
     nodes = append_colors(
         nodes,
@@ -905,15 +909,13 @@ def visualize(
         true_color=true_color,
         false_color=false_color,
     )
-    
+
     kegg_map_image = Image.fromarray(pykegg.overlay_opencv_image(nodes, pid=pathway_id))
     if output is not None:
-    	print(output)
-    	kegg_map_image.save(output)
-    	return
+        kegg_map_image.save(output)
+        return
     else:
-	    return kegg_map_image        
-
+        return kegg_map_image
 
 
 def visualize_gseapy(
@@ -1153,7 +1155,7 @@ def parallel_edges(df, move_param=5):
         tmp_group = group[1]
         radians = math.atan2(
             tmp_group.yend.unique() - tmp_group.y.unique(),
-            tmp_group.xend.unique() - tmp_group.x.unique()
+            tmp_group.xend.unique() - tmp_group.x.unique(),
         )
         nudge = np.linspace(-1 * move_param, move_param, tmp_group.shape[0])
         if tmp_group.y.unique()[0] == tmp_group.yend.unique()[0]:
