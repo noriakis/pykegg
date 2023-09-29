@@ -8,6 +8,7 @@ import requests_cache
 import numpy as np
 from PIL import Image
 import pykegg
+import matplotlib as mpl
 
 ## Be sure to cache all the downloaded files to avoid recursive querying
 requests_cache.install_cache('pykegg_cache')
