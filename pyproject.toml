@@ -1,6 +1,6 @@
 [project]
 name = "pykegg"
-version = "0.0.9"
+version = "0.1.0"
 authors = [
   { name="Noriaki Sato", email="nori@hgc.jp" },
 ]
@@ -28,3 +28,10 @@ classifiers = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+exclude = [
+    "/.*",
+    "/docs",
+    "/tests",
+]
