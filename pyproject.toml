@@ -1,6 +1,8 @@
 [project]
 name = "pykegg"
-version = "0.1.0"
+dynamic = [
+ "version",
+]
 authors = [
   { name="Noriaki Sato", email="nori@hgc.jp" },
 ]
@@ -35,3 +37,6 @@ exclude = [
     "/docs",
     "/tests",
 ]
+
+[tool.hatch.version]
+path = "src/pykegg/__init__.py"
