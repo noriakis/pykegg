@@ -25,7 +25,6 @@ extensions = [
 ]
 
 autosummary_generate = True
-html_extra_path = ["googleae34d7ef963c9bd7.html"]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
