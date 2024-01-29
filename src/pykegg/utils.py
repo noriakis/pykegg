@@ -703,7 +703,10 @@ def append_colors_continuous_values(
     colors=None,
     two_slope=True,
     center_value="median",
-    orig_value=None
+    orig_value=None,
+    fix_min=None,
+    fix_max=None,
+    fix_center=None
 ):
     """Append continuous colors to the node_df based on the values in dict.
 
@@ -728,6 +731,13 @@ def append_colors_continuous_values(
         the center value of the color scheme. Default is "median".
     orig_value: str
         If specified, append the values used to compute color in the DataFrame.
+    fix_min: float
+        fixed minimum value to calculate color
+    fix_max: float
+        fixed maximum value to calculate color
+    fix_center: float
+        fixed center value to calculate color
+        
     """
     node_value = []
     for node in node_df[node_name_column]:
@@ -750,13 +760,28 @@ def append_colors_continuous_values(
     if center_value == "median":
         center_value = np.median(values)
 
+    if fix_min is not None:
+        minval = fix_min
+    else:
+        minval = min(values)
+
+    if fix_max is not None:
+        maxval = fix_max
+    else:
+        maxval = max(values)
+
+    if fix_center is not None:
+        centval = fix_center
+    else:
+        centval = center_value
+
     cmap_grad = mpl.colors.LinearSegmentedColormap.from_list("cmap_grad", colors)
     if two_slope:
         norm = mpl.colors.TwoSlopeNorm(
-            vmin=min(values), vcenter=center_value, vmax=max(values)
+            vmin=minval, vcenter=centval, vmax=maxval
         )
     else:
-        norm = mpl.colors.Normalize(vmin=min(values), vmax=max(values))
+        norm = mpl.colors.Normalize(vmin=minval, vmax=maxval)
     node_df[new_color_column] = [
         mpl.colors.to_hex(cmap_grad(norm(x))) if x is not None else None
         for x in node_value
