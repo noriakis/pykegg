@@ -52,7 +52,7 @@ def overlay_opencv_image(
         the color number. Skip the node if `None`.
     transparent_color: list of str
         specify which color to be transparent.
-        If `None`, default `["#FFFFFF", "#BFFFBF"]` is used.
+        If `None`, default `["#FFFFFF", "#BFFFBF", "#BFBFFF"]` is used.
     highlight_nodes: str
         the column in `node_df` specifying which nodes to be highlighted.
     hihglight_color: str
@@ -61,7 +61,7 @@ def overlay_opencv_image(
         the number of pixels to expand the highlighted nodes.
     """
     if transparent_colors is None:
-        transparent_colors = ["#FFFFFF", "#BFFFBF"]
+        transparent_colors = ["#FFFFFF", "#BFFFBF", "#BFBFFF"]
 
     node_df["x0"] = node_df["x"] - node_df["width"] / 2
     node_df["y0"] = node_df["y"] + node_df["height"] / 2
@@ -77,6 +77,8 @@ def overlay_opencv_image(
             nparr = np.frombuffer(im_res.content, np.uint8)
             image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
+    ## For making transparent image
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     canvas = np.zeros([image.shape[0], image.shape[1], 3], dtype=np.uint8)
     canvas.fill(255)
 
