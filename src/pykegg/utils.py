@@ -703,6 +703,7 @@ def append_colors_continuous_values(
     colors=None,
     two_slope=True,
     center_value="median",
+    orig_value=None
 ):
     """Append continuous colors to the node_df based on the values in dict.
 
@@ -725,6 +726,8 @@ def append_colors_continuous_values(
         whether to use two-slope color scheme. Default is True.
     center_value: str or float
         the center value of the color scheme. Default is "median".
+    orig_value: str
+        If specified, append the values used to compute color in the DataFrame.
     """
     node_value = []
     for node in node_df[node_name_column]:
@@ -735,6 +738,10 @@ def append_colors_continuous_values(
             node_value.append(np.mean(tmp))
         else:
             node_value.append(None)
+    
+    if orig_value is not None:
+    	node_df[orig_value] = node_value
+    
     values = [n for n in node_value if n is not None]
 
     if colors is None:
