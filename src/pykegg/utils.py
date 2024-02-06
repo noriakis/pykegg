@@ -745,7 +745,7 @@ def append_colors_continuous_values(
         intersect = set(in_node) & set(lfc_dict.keys())
         if len(intersect) > 0:
             tmp = [lfc_dict[i] for i in lfc_dict if i in intersect]
-            node_value.append(np.mean(tmp))
+            node_value.append(np.nanmean(tmp))
         else:
             node_value.append(None)
     
@@ -758,7 +758,7 @@ def append_colors_continuous_values(
         colors = ["#0000ff", "#ffffff", "#ff0000"]
 
     if center_value == "median":
-        center_value = np.median(values)
+        center_value = np.nanmedian(values)
 
     if fix_min is not None:
         minval = fix_min
