@@ -91,6 +91,9 @@ def overlay_opencv_image(
 
     for i in node_df.id:
         tmp = node_df[node_df.id == i].iloc[0, :]
+        
+        if np.isnan(tmp.x0):
+            continue
         pos = (
             int(tmp["x0"]),
             int(-1 * tmp["y0"]),

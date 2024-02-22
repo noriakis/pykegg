@@ -1,5 +1,5 @@
 {% set name = "pykegg" %}
-{% set version = "0.1.4" %}
+{% set version = "0.1.5" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,6 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pykegg-{{ version }}.tar.gz
-  sha256: bfbb96bef2dc60fa2a5bb235b79716370efddf2a62533128e68f5476f3e7ba62
 
 build:
   noarch: python
