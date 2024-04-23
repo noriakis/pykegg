@@ -29,10 +29,6 @@ nds["color"] = [
         for x in nds.lfc
     ]
 Image.fromarray(pykegg.overlay_opencv_image(nds, pid="hsa03460"))
-
-## Plot using plotnine
-# options.figure_size = (7,5)
-pykegg.plot_kegg_pathway_plotnine(g, node_x_nudge=25, label_size=5, show_label="gene")
 ```
 
 ## Documentation
