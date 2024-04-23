@@ -15,16 +15,17 @@ build:
 
 requirements:
   host:
-    - python >=3.7
+    - python
     - hatchling
     - pip
   run:
-    - python >=3.7
+    - python
     - python-igraph
     - pandas
     - biopython
     - requests
     - opencv
+    - matplotlib
 
 test:
   imports:
