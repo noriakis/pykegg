@@ -7,6 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pykegg-{{ version }}.tar.gz
+  sha256: 0d70be0dec36317a014d932ae727a88c56f823dd00dc3db8133a89cd45d586bc
 
 build:
   noarch: python
@@ -15,11 +16,11 @@ build:
 
 requirements:
   host:
-    - python
+    - python >=3.7
     - hatchling
     - pip
   run:
-    - python
+    - python >=3.7
     - python-igraph
     - pandas
     - biopython
@@ -37,7 +38,7 @@ test:
 
 about:
   summary: Visualizing and analyzing KEGG information in Python
-  license: AGPL-3
+  license: EPL-2.0
   license_file: LICENSE
 
 extra:

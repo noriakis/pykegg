@@ -11,7 +11,8 @@ dependencies = [
     "pandas",
     "biopython",
     "requests",
-    "opencv-python"
+    "opencv-python",
+    "matplotlib"
 ]
 description = "Visualizing and analyzing KEGG information in Python"
 readme = "README.md"

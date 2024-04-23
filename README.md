@@ -32,7 +32,7 @@ Image.fromarray(pykegg.overlay_opencv_image(nds, pid="hsa03460"))
 ```
 
 ## Documentation
-[https://pykegg.readthedocs.io/](https://pykegg.readthedocs.io/)
+[https://noriakis.github.io/pykegg-docs](https://noriakis.github.io/pykegg-docs)
 
 ## TODO
 - [ ] The function for converting identifiers (especially for ENTREZID <-> SYMBOL) without connection to servers, like using [`genomic-features`](https://genomic-features.readthedocs.io/en/latest/).
