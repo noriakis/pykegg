@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'pykegg'
-copyright = '2023, Noriaki Sato'
+copyright = '2024, Noriaki Sato'
 author = 'Noriaki Sato'
 
 release = '0.1'
@@ -35,7 +35,7 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 
-# html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_rtd_theme'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'

@@ -10,7 +10,6 @@ dependencies = [
     "igraph",
     "pandas",
     "biopython",
-    "plotnine",
     "requests",
     "opencv-python"
 ]
