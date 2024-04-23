@@ -4,11 +4,21 @@ pykegg package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+pykegg.KGML\_graph module
+-------------------------
 
-   pykegg.KGML_graph
-   pykegg.utils
+.. automodule:: pykegg.KGML_graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pykegg.utils module
+-------------------
+
+.. automodule:: pykegg.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
