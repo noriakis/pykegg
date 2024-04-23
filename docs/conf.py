@@ -7,7 +7,7 @@ copyright = '2024, Noriaki Sato'
 author = 'Noriaki Sato'
 
 release = '0.1'
-version = '0.0.4'
+version = '0.0.5'
 
 # -- General configuration
 import os
