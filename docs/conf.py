@@ -35,7 +35,10 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 
-# html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
+html_use_opensearch = "http://pykegg.readthedocs.io"
+html_search_language = "en"
+
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
@@ -51,8 +54,8 @@ def run_apidoc(_):
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     cur_dir = os.path.abspath(os.path.dirname(__file__))
-    module = os.path.join(cur_dir,"..","src")
-    main(['-e', '-o', cur_dir, module, '--force'])
+    module = os.path.join(cur_dir,"..","src", "pykegg")
+    main(['--no-toc', '--force', '-e', '-o', cur_dir, module])
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)
