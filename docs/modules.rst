@@ -1,5 +1,5 @@
-pykegg
-======
+src
+===
 
 .. toctree::
    :maxdepth: 4
