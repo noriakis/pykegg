@@ -33,7 +33,7 @@ Please see :ref:`notebooks <notebooks>` for the visualization example and the ex
   :hidden:
 
   usage
-  modules
+  pykegg
 
 .. toctree::
   :caption: Example analysis
