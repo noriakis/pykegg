@@ -1,19 +1,22 @@
 pykegg package
 ==============
 
+.. automodule:: pykegg
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
 
-   pykegg.KGML_graph
-   pykegg.utils
+.. automodule:: pykegg.KGML_graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-Module contents
----------------
 
-.. automodule:: pykegg
+.. automodule:: pykegg.utils
    :members:
    :undoc-members:
    :show-inheritance:
