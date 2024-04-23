@@ -43,6 +43,7 @@ html_search_language = "en"
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
 
+source_suffix = '.rst'
 
 # html_static_path = ['_static']
 # html_style = 'custom.css'
@@ -55,7 +56,7 @@ def run_apidoc(_):
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     cur_dir = os.path.abspath(os.path.dirname(__file__))
     module = os.path.join(cur_dir,"..","src")
-    main(['--module-first', '--no-toc', '--force', '-e', '-o', cur_dir, module])
+    main(['-e', '-o', cur_dir, module])
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)
