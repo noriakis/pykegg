@@ -56,7 +56,7 @@ def run_apidoc(_):
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     cur_dir = os.path.abspath(os.path.dirname(__file__))
     module = os.path.join(cur_dir,"..","src")
-    main(['-e', '-o', cur_dir, module])
+    main(['--force', '-e', '-o', cur_dir, module])
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)
