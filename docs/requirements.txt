@@ -1,0 +1,4 @@
+ipykernel
+nbsphinx
+sphinx-gallery
+sphinx-book-theme
