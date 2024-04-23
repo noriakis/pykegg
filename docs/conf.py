@@ -38,3 +38,16 @@ todo_include_todos = True
 html_theme = 'sphinx_book_theme'
 html_use_opensearch = "http://pykegg.readthedocs.io"
 html_search_language = "en"
+
+def run_apidoc(_):
+    from sphinx.ext.apidoc import main
+    import os
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    cur_dir = os.path.abspath(os.path.dirname(__file__))
+    module = os.path.join(cur_dir,"..","src")
+    main(['--force', '--no-toc',
+        '-e', '-o', cur_dir, module])
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
