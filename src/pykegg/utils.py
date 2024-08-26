@@ -121,6 +121,8 @@ def overlay_opencv_image(
         highlight_node_df = node_df[node_df[highlight_nodes]]
         for i in highlight_node_df.id:
             tmp = highlight_node_df[highlight_node_df.id == i]
+            if np.isnan(tmp.x0):
+                continue
             pos = (
                 int(tmp["x0"]),
                 int(-1 * tmp["y0"]),
